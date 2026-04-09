@@ -1,4 +1,4 @@
-import { resend } from "../client";
+import { sendEmail } from "../client";
 
 type OtpEmailType =
   | "sign-in"
@@ -102,11 +102,20 @@ export const sendVerificationOtp = async ({
     content.note,
   ].join("\n");
 
-  await resend.emails.send({
-    from: "Math App <onboarding@resend.dev>",
-    to: email,
-    subject: content.subject,
-    html,
-    text,
-  });
+  try {
+    await sendEmail({
+      fromName: "Math App",
+      to: email,
+      subject: content.subject,
+      html,
+      text,
+    });
+  } catch (error) {
+    console.error("Unexpected error while sending verification OTP email.", {
+      email,
+      type,
+      error,
+    });
+    throw error;
+  }
 };

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hailong Dao",
+  title: "Hailong Dao - Academic Website",
   description: "Hailong Dao - Academic Website",
 };
 

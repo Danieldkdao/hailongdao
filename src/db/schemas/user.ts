@@ -1,5 +1,20 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  pgEnum,
+} from "drizzle-orm/pg-core";
+import { MathProblemTable } from "./math-problem";
+import { CommentTable } from "./comment";
+import { MathProblemVoteTable } from "./math-problem-vote";
+import { CommentVoteTable } from "./comment-vote";
+
+export const userRoles = ["user", "admin"] as const;
+export type UserRole = (typeof userRoles)[number];
+export const userRoleEnum = pgEnum("user_roles", userRoles);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -12,7 +27,7 @@ export const user = pgTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role"),
+  role: userRoleEnum("role").default("user").notNull(),
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
@@ -83,6 +98,10 @@ export const verification = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  mathProblems: many(MathProblemTable),
+  comments: many(CommentTable),
+  mathProblemVotes: many(MathProblemVoteTable),
+  commentVotes: many(CommentVoteTable),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

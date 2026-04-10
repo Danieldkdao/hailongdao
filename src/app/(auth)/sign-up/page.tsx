@@ -16,7 +16,7 @@ import Link from "next/link";
 import { SendIcon } from "lucide-react";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
-import { ERROR_MESSAGE } from "@/lib/constants";
+import { ERROR_MESSAGE } from "@/lib/auth/constants";
 import {
   PasswordInput,
   PasswordInputStrengthChecker,

@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ERROR_MESSAGE } from "@/lib/constants";
+import { ERROR_MESSAGE } from "@/lib/auth/constants";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { Field, FieldDescription, FieldError } from "../ui/field";
 import { Button } from "../ui/button";

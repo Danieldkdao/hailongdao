@@ -16,12 +16,22 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { LoadingSwap } from "@/components/ui/loading-swap";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { mathProblemStatuses } from "@/db/schema";
+import { getMathProblemStatus } from "./math-problem-list-table";
 
 export const CreateProblemForm = () => {
   const form = useForm<CreateMathProblemSchemaType>({
     resolver: zodResolver(createMathProblemSchema),
     defaultValues: {
       title: "",
+      status: "draft",
       content: "",
     },
   });
@@ -58,6 +68,32 @@ export const CreateProblemForm = () => {
                   placeholder="Title goes here..."
                   className={errorBorder(fieldState.error)}
                 />
+                {fieldState.error && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+          <Controller
+            name="status"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field>
+                <FieldLabel>Status</FieldLabel>
+                <Select
+                  {...field}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mathProblemStatuses.map((status) => (
+                      <SelectItem value={status} key={status}>
+                        {getMathProblemStatus(status)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}

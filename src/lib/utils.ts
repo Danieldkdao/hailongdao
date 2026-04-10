@@ -8,3 +8,10 @@ export function cn(...inputs: ClassValue[]) {
 
 export const errorBorder = (error?: FieldError) =>
   error && "border-destructive";
+
+export const formatNumberTruncate = (num: number) => {
+  return new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(num);
+};

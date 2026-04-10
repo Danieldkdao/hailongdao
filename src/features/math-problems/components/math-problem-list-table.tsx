@@ -1,13 +1,19 @@
 "use client";
 
 import { ColumnDef, Table } from "@tanstack/react-table";
-import { GetUserMathProblemsType } from "../actions/actions";
+import {
+  GetUserMathProblemsType,
+  updateMathProblemStatus,
+} from "../actions/actions";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableSortableColumnHeader } from "@/components/data-table/data-table-sortable-column-header";
 import { Button } from "@/components/ui/button";
 import {
+  ArchiveIcon,
   EditIcon,
   EllipsisVerticalIcon,
+  FileEditIcon,
+  GlobeIcon,
   MessageSquareIcon,
   SearchIcon,
   ThumbsDownIcon,
@@ -18,10 +24,43 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MathProblemStatus, mathProblemStatuses } from "@/db/schema";
+import { formatNumberTruncate } from "@/lib/utils";
+import { useOptimistic, useTransition } from "react";
+import { toast } from "sonner";
+
+export const getMathProblemStatus = (status: MathProblemStatus) => {
+  switch (status) {
+    case "draft":
+      return (
+        <>
+          <FileEditIcon className="size-4" />
+          Draft
+        </>
+      );
+    case "published":
+      return (
+        <>
+          <GlobeIcon className="size-4" />
+          Published
+        </>
+      );
+    case "archived":
+      return (
+        <>
+          <ArchiveIcon className="size-4" />
+          Archived
+        </>
+      );
+    default:
+      throw new Error(`Unknown status: ${status satisfies never}`);
+  }
+};
 
 const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
   {
@@ -51,7 +90,23 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
     accessorFn: (row) => row.title,
     header: "Title",
     cell: ({ row }) => {
-      return <span className="text-lg font-medium">{row.original.title}</span>;
+      return (
+        <div
+          className="max-w-[12rem] lg:max-w-xl truncate text-lg font-medium"
+          title={row.original.title}
+        >
+          {row.original.title}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      return (
+        <StatusCell id={row.original.id} originalStatus={row.original.status} />
+      );
     },
   },
   {
@@ -62,7 +117,7 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <MessageSquareIcon className="size-4" />
-        <span className="text-lg">{row.original.commentCount}</span>
+        <span>{formatNumberTruncate(row.original.commentCount)}</span>
       </div>
     ),
   },
@@ -74,7 +129,7 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <ThumbsUpIcon className="size-4" />
-        <span className="text-lg">{row.original.upVoteCount}</span>
+        <span>{formatNumberTruncate(row.original.upVoteCount)}</span>
       </div>
     ),
   },
@@ -86,7 +141,7 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <ThumbsDownIcon className="size-4" />
-        <span className="text-lg">{row.original.downVoteCount}</span>
+        <span>{formatNumberTruncate(row.original.downVoteCount)}</span>
       </div>
     ),
   },
@@ -121,6 +176,7 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
         </DropdownMenu>
       );
     },
+    enableHiding: false,
   },
 ];
 
@@ -167,6 +223,30 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
           </div>
         )}
       </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="ml-auto">
+            Columns
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {table
+            .getAllColumns()
+            .filter((column) => column.getCanHide())
+            .map((column) => {
+              return (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
@@ -186,5 +266,45 @@ export const MathProblemListTable = ({
         tableClassName="min-w-[72rem]"
       />
     </div>
+  );
+};
+
+const StatusCell = ({
+  id,
+  originalStatus,
+}: {
+  id: string;
+  originalStatus: MathProblemStatus;
+}) => {
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic(originalStatus);
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild disabled={isPending}>
+        <Button variant="ghost">
+          {getMathProblemStatus(optimisticStatus)}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {mathProblemStatuses.map((status) => (
+          <DropdownMenuItem
+            key={status}
+            onClick={() => {
+              startTransition(async () => {
+                setOptimisticStatus(status);
+                const res = await updateMathProblemStatus(id, status);
+
+                if (res.error) {
+                  toast.error(res.message);
+                }
+              });
+            }}
+          >
+            {getMathProblemStatus(status)}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

@@ -4,12 +4,17 @@ import { getCurrentUser } from "@/lib/auth/auth-helpers";
 import {
   createMathProblemSchema,
   CreateMathProblemSchemaType,
+  mathProblemStatusSchema,
 } from "./schemas";
-import { INVALID_DATA_MESSAGE, UNAUTHED_MESSAGE } from "@/lib/auth/constants";
-import { insertMathProblem } from "../db/math-problems";
+import {
+  INVALID_DATA_MESSAGE,
+  NO_PERMISSION_MESSAGE,
+} from "@/lib/auth/constants";
+import { insertMathProblem, updateMathProblem } from "../db/math-problems";
 import { db } from "@/db/db";
 import {
   CommentTable,
+  MathProblemStatus,
   MathProblemTable,
   MathProblemVoteTable,
 } from "@/db/schema";
@@ -25,7 +30,7 @@ export const createMathProblem = async (
   if (!userId || user?.role !== "admin") {
     return {
       error: true,
-      message: UNAUTHED_MESSAGE,
+      message: NO_PERMISSION_MESSAGE,
     };
   }
 
@@ -42,6 +47,34 @@ export const createMathProblem = async (
   return {
     error: false,
     message: "Math problem created successfully!",
+  };
+};
+
+export const updateMathProblemStatus = async (
+  id: string,
+  unsafeStatus: MathProblemStatus,
+) => {
+  const { userId, user } = await getCurrentUser({ allData: true });
+  if (!userId || !user || user.role !== "admin") {
+    return {
+      error: true,
+      message: NO_PERMISSION_MESSAGE,
+    };
+  }
+
+  const { success, data } = mathProblemStatusSchema.safeParse(unsafeStatus);
+  if (!success) {
+    return {
+      error: true,
+      message: INVALID_DATA_MESSAGE,
+    };
+  }
+
+  await updateMathProblem(id, { status: data });
+
+  return {
+    error: false,
+    message: "Math problem status updated successfully!",
   };
 };
 

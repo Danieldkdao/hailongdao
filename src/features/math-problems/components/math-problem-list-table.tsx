@@ -2,6 +2,7 @@
 
 import { ColumnDef, Table } from "@tanstack/react-table";
 import {
+  deleteMathProblems,
   GetUserMathProblemsType,
   updateMathProblemStatus,
 } from "../actions/actions";
@@ -31,8 +32,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MathProblemStatus, mathProblemStatuses } from "@/db/schema";
 import { formatNumberTruncate } from "@/lib/utils";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useConfirm } from "@/hooks/use-confirm";
+import { UpdateMathProblemDialog } from "./update-math-problem-dialog";
 
 export const getMathProblemStatus = (status: MathProblemStatus) => {
   switch (status) {
@@ -155,26 +159,8 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
   },
   {
     id: "actions",
-    cell: () => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <EllipsisVerticalIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <EditIcon />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              <Trash2Icon className="text-destructive" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+    cell: ({ row }) => {
+      return <ActionCell mathProblem={row.original} />;
     },
     enableHiding: false,
   },
@@ -293,7 +279,7 @@ const StatusCell = ({
             onClick={() => {
               startTransition(async () => {
                 setOptimisticStatus(status);
-                const res = await updateMathProblemStatus(id, status);
+                const res = await updateMathProblemStatus([id], status);
 
                 if (res.error) {
                   toast.error(res.message);
@@ -306,5 +292,62 @@ const StatusCell = ({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+};
+
+const ActionCell = ({
+  mathProblem,
+}: {
+  mathProblem: GetUserMathProblemsType[number];
+}) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [ConfirmationDialog, confirm] = useConfirm(
+    "Confirm Deletion",
+    "Are you sure you want to delete this math problem? This will cause a permanent loss of data and cannot be undone.",
+  );
+  const deleteAction = async () => {
+    setIsLoading(true);
+    const confirmation = await confirm();
+    if (!confirmation) return;
+    const response = await deleteMathProblems([mathProblem.id]);
+
+    if (response.error) {
+      setIsLoading(false);
+      toast.error(response.message);
+      return;
+    }
+    setIsLoading(false);
+    toast.success(response.message);
+    router.refresh();
+  };
+
+  return (
+    <>
+      <UpdateMathProblemDialog
+        open={open}
+        setOpen={setOpen}
+        mathProblem={mathProblem}
+      />
+      <ConfirmationDialog />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={isLoading}>
+          <Button variant="ghost" size="icon">
+            <EllipsisVerticalIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setOpen(true)}>
+            <EditIcon />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-destructive" onClick={deleteAction}>
+            <Trash2Icon className="text-destructive" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 };

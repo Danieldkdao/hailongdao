@@ -10,7 +10,11 @@ import {
   INVALID_DATA_MESSAGE,
   NO_PERMISSION_MESSAGE,
 } from "@/lib/auth/constants";
-import { insertMathProblem, updateMathProblem } from "../db/math-problems";
+import {
+  insertMathProblem,
+  updateMathProblems as updateMathProblemsDb,
+  deleteMathProblems as deleteMathProblemsDb,
+} from "../db/math-problems";
 import { db } from "@/db/db";
 import {
   CommentTable,
@@ -51,7 +55,7 @@ export const createMathProblem = async (
 };
 
 export const updateMathProblemStatus = async (
-  id: string,
+  ids: string[],
   unsafeStatus: MathProblemStatus,
 ) => {
   const { userId, user } = await getCurrentUser({ allData: true });
@@ -70,11 +74,56 @@ export const updateMathProblemStatus = async (
     };
   }
 
-  await updateMathProblem(id, { status: data });
+  await updateMathProblemsDb(ids, { status: data });
 
   return {
     error: false,
     message: "Math problem status updated successfully!",
+  };
+};
+
+export const updateMathProblem = async (
+  id: string,
+  unsafeData: CreateMathProblemSchemaType,
+) => {
+  const { userId, user } = await getCurrentUser({ allData: true });
+  if (!userId || !user || user.role !== "admin") {
+    return {
+      error: true,
+      message: NO_PERMISSION_MESSAGE,
+    };
+  }
+
+  const { success, data } = createMathProblemSchema.safeParse(unsafeData);
+  if (!success) {
+    return {
+      error: true,
+      message: INVALID_DATA_MESSAGE,
+    };
+  }
+
+  await updateMathProblemsDb([id], data);
+
+  return {
+    error: false,
+    message: "Math problem updated successfully!",
+  };
+};
+
+export const deleteMathProblems = async (ids: string[]) => {
+  const { userId, user } = await getCurrentUser({ allData: true });
+  if (!userId || !user || user.role !== "admin") {
+    return {
+      error: true,
+      message: NO_PERMISSION_MESSAGE,
+    };
+  }
+
+  await deleteMathProblemsDb(ids);
+
+  return {
+    error: false,
+    message: "Math problem deleted successfully!",
   };
 };
 

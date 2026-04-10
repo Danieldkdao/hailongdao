@@ -1,7 +1,7 @@
 import { db } from "@/db/db";
 import { MathProblemTable } from "@/db/schema";
 import { revalidateMathProblemCache } from "./cache/math-problems";
-import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 
 export const insertMathProblem = async (
   mathProblem: typeof MathProblemTable.$inferInsert,
@@ -14,15 +14,24 @@ export const insertMathProblem = async (
   revalidateMathProblemCache(insertedMathProblem);
 };
 
-export const updateMathProblem = async (
-  id: string,
+export const updateMathProblems = async (
+  ids: string[],
   mathProblem: Partial<typeof MathProblemTable.$inferSelect>,
 ) => {
   const [insertedMathProblem] = await db
     .update(MathProblemTable)
     .set(mathProblem)
-    .where(eq(MathProblemTable.id, id))
+    .where(inArray(MathProblemTable.id, ids))
     .returning();
 
   revalidateMathProblemCache(insertedMathProblem);
+};
+
+export const deleteMathProblems = async (ids: string[]) => {
+  const [deletedMathProblem] = await db
+    .delete(MathProblemTable)
+    .where(inArray(MathProblemTable.id, ids))
+    .returning();
+
+  revalidateMathProblemCache(deletedMathProblem);
 };

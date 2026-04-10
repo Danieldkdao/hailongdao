@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+  --font-sans: Outfit, ui-sans-serif, sans-serif, system-ui;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -106,7 +106,7 @@
   --sidebar-accent-foreground: oklch(0.2050 0 0);
   --sidebar-border: oklch(0.9220 0 0);
   --sidebar-ring: oklch(0.7080 0 0);
-  --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+  --font-sans: Outfit, ui-sans-serif, sans-serif, system-ui;
   --destructive-foreground: oklch(1 0 0);
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -163,7 +163,7 @@
   --sidebar-ring: oklch(0.4390 0 0);
   --destructive-foreground: oklch(0.9801 0.0096 252.8096);
   --radius: 0.625rem;
-  --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+  --font-sans: Outfit, ui-sans-serif, sans-serif, system-ui;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --shadow-color: oklch(0 0 0);

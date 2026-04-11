@@ -8,6 +8,10 @@ import { asc, count, desc, eq, getTableColumns, SQL } from "drizzle-orm";
 import { PAGE_SIZE } from "@/lib/constants";
 import { SORT_BY } from "../lib/params";
 import { ActionOutput } from "@/lib/types";
+import { createCommentSchema, CreateCommentSchemaType } from "./schemas";
+import { INVALID_DATA_MESSAGE } from "@/lib/auth/constants";
+import { insertComment } from "../db/comments";
+import { getCurrentUser } from "@/lib/auth/auth-helpers";
 
 export const getComments = async ({
   mathProblemId,
@@ -67,6 +71,27 @@ export const getComments = async ({
       hasNextPage,
       totalPages,
     },
+  };
+};
+
+export const createComment = async (
+  mathProblemId: string,
+  unsafeData: CreateCommentSchemaType,
+) => {
+  const { userId } = await getCurrentUser();
+  const { success, data } = createCommentSchema.safeParse(unsafeData);
+  if (!success) {
+    return {
+      error: true,
+      message: INVALID_DATA_MESSAGE,
+    };
+  }
+
+  await insertComment({ mathProblemId, ...data, userId });
+
+  return {
+    error: false,
+    message: "Comment posted successfully!",
   };
 };
 

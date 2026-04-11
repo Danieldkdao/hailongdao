@@ -91,9 +91,11 @@ const getContinuedListLine = (line: string) => {
 export const MarkdownEditor = ({
   value,
   onChange,
+  height,
 }: {
   value: string;
   onChange: (value: string) => void;
+  height?: number;
 }) => {
   const { resolvedTheme } = useTheme();
   const isMobile = useIsMobile();
@@ -239,11 +241,10 @@ export const MarkdownEditor = ({
           onChange={(nextValue) => onChange(nextValue ?? "")}
           preview={isMobile ? "edit" : "live"}
           visibleDragbar={false}
-          minHeight={isMobile ? 360 : 520}
-          height={isMobile ? 360 : 520}
+          minHeight={height ?? (isMobile ? 360 : 520)}
+          height={height ?? (isMobile ? 360 : 520)}
           textareaProps={{
-            placeholder:
-              "Write the problem statement, context, hints, and any math in Markdown. Use fenced ```katex blocks or $$...$$ for equations.",
+            placeholder: "Use fenced ```katex blocks or $$...$$ for equations.",
             onKeyDownCapture: handleListEnter,
           }}
           previewOptions={previewOptions}

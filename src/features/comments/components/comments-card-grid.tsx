@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { GetCommentsType } from "../actions/actions";
-import { CommentCard } from "./comment-card";
+import { Comment } from "./comment";
 import { MessageSquareIcon } from "lucide-react";
 
 export const CommentsCardList = ({
@@ -11,7 +11,9 @@ export const CommentsCardList = ({
   return (
     <div className="flex flex-col gap-2">
       {comments.length ? (
-        comments.map((comment) => <CommentCard comment={comment} />)
+        comments.map((comment) => (
+          <Comment key={comment.id} comment={comment} />
+        ))
       ) : (
         <Card className="border-2 border-border border-dashed">
           <CardContent className="flex flex-col items-center gap-2">

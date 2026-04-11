@@ -7,6 +7,7 @@ import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import type { ComponentPropsWithoutRef } from "react";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
 const markdownComponents = {
   h1: ({ children, ...props }: ComponentPropsWithoutRef<"h1">) => (
@@ -52,7 +53,10 @@ const markdownComponents = {
     </h6>
   ),
   p: ({ children, ...props }: ComponentPropsWithoutRef<"p">) => (
-    <p {...props} className="my-4 text-[1.02rem] leading-8 text-foreground/90">
+    <p
+      {...props}
+      className="my-4 break-words text-[1.02rem] leading-8 text-foreground/90 [overflow-wrap:anywhere]"
+    >
       {children}
     </p>
   ),
@@ -83,7 +87,7 @@ const markdownComponents = {
     </ol>
   ),
   li: ({ children, ...props }: ComponentPropsWithoutRef<"li">) => (
-    <li {...props} className="pl-1 leading-7">
+    <li {...props} className="break-words pl-1 leading-7 [overflow-wrap:anywhere]">
       {children}
     </li>
   ),
@@ -169,20 +173,26 @@ const markdownComponents = {
   ),
 };
 
-export const MarkdownRenderer = ({ children }: { children: string }) => {
+export const MarkdownRenderer = ({
+  children,
+  className,
+}: {
+  children: string;
+  className?: string;
+}) => {
   const { resolvedTheme } = useTheme();
 
   return (
     <div
       data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
-      className="py-6"
+      className={cn("min-w-0 w-full", className)}
     >
       <div className="wmde-markdown-var" />
       <MDEditor.Markdown
         source={children}
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
-        className="max-w-none bg-transparent text-base"
+        className="max-w-none min-w-0 bg-transparent text-base [&_.katex-display]:my-6 [&_.katex-display]:w-full [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2 [&_.katex-display>span]:min-w-max [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full"
         components={markdownComponents}
       />
     </div>

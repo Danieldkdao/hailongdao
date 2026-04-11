@@ -1,14 +1,22 @@
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getComments } from "@/features/comments/actions/actions";
+import { CommentListFilters } from "@/features/comments/components/comment-list-filters";
 import { CommentsCardList } from "@/features/comments/components/comments-card-grid";
 import { CommentsPagination } from "@/features/comments/components/comments-pagination";
 import { CreateCommentForm } from "@/features/comments/components/create-comment-form";
 import { loadSearchParams } from "@/features/comments/lib/params";
 import { getOneMathProblem } from "@/features/math-problems/actions/actions";
 import { UserAvatar } from "@/features/user/components/user-avatar";
-import { EyeIcon, MessageSquareIcon, ThumbsUpIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  EyeIcon,
+  MessageSquareIcon,
+  ThumbsUpIcon,
+} from "lucide-react";
+import Link from "next/link";
 import { SearchParams } from "nuqs";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -40,6 +48,12 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
   return (
     <div className="py-10 px-6 w-full">
       <div className="w-full mx-auto max-w-5xl bg-card border border-border p-6 flex flex-col gap-2">
+        <Button variant="ghost" className="w-fit" asChild>
+          <Link href="/">
+            <ArrowLeftIcon />
+            Back to Home
+          </Link>
+        </Button>
         <h1 className="text-4xl font-bold">{mathProblem.title}</h1>
         <div className="flex flex-col gap-2">
           <span>Posted on {mathProblem.createdAt.toLocaleDateString()}</span>
@@ -63,14 +77,17 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
             {mathProblem.upVoteCount} upvotes
           </Badge>
         </div>
-        <MarkdownRenderer>{mathProblem.content}</MarkdownRenderer>
+        <MarkdownRenderer className="py-6">
+          {mathProblem.content}
+        </MarkdownRenderer>
         <Separator className="mb-2" />
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">
-            Comments ({mathProblem.commentCount})
+            Comments ({data.comments.length})
           </h2>
+          <CommentListFilters />
           <CommentsCardList comments={data.comments} />
-          <CreateCommentForm />
+          <CreateCommentForm mathProblemId={mathProblemId} />
           <CommentsPagination metadata={data.metadata} />
         </div>
       </div>

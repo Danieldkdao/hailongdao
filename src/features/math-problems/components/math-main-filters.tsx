@@ -19,22 +19,20 @@ export const MathMainFilters = () => {
         className="h-20 px-8 rounded-full text-2xl md:text-2xl font-medium"
         placeholder="Search math problems..."
       />
-      <div className="flex items-center gap-4">
-        <span className="font-medium">Sort By</span>
-        <div className="flex items-center gap-2">
-          {SORT_BY.map((option) => (
-            <Button
-              key={option}
-              variant={filters.sortBy === option ? "default" : "outline"}
-              className="capitalize rounded-full"
-              onClick={() =>
-                setFilters({ ...filters, page: DEFAULT_PAGE, sortBy: option })
-              }
-            >
-              {option.replaceAll("_", " ")}
-            </Button>
-          ))}
-        </div>
+
+      <div className="flex items-center justify-center gap-2 flex-wrap">
+        {SORT_BY.map((option) => (
+          <Button
+            key={option}
+            variant={filters.sortBy === option ? "default" : "outline"}
+            className="capitalize rounded-full"
+            onClick={() =>
+              setFilters({ ...filters, page: DEFAULT_PAGE, sortBy: option })
+            }
+          >
+            {option.replaceAll("_", " ")}
+          </Button>
+        ))}
       </div>
     </div>
   );

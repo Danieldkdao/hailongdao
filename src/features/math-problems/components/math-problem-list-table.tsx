@@ -269,6 +269,7 @@ export const MathProblemListTable = ({
         noResultsMessage="No math problems found."
         ToolbarComponent={Toolbar}
         tableClassName="min-w-[72rem]"
+        getRowId={(row) => row.id}
       />
     </div>
   );

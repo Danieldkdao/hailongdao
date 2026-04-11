@@ -34,6 +34,7 @@ interface DataTableProps<TData, TValue> {
   noResultsMessage?: ReactNode;
   ToolbarComponent?: ComponentType<{ table: TableType<TData> }>;
   tableClassName?: string;
+  getRowId?: (originalRow: TData, index: number) => string;
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +44,7 @@ export function DataTable<TData, TValue>({
   noResultsMessage = "No results.",
   ToolbarComponent,
   tableClassName,
+  getRowId,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
@@ -54,6 +56,7 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),

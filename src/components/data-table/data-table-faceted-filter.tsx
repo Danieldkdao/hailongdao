@@ -39,7 +39,9 @@ export const DataTableFacetedFilter = <TData, TValue, OValue>({
       <PopoverTrigger asChild>
         <Button disabled={disabled} variant="outline" size="sm">
           {selectedValues.size > 0 && (
-            <Badge variant="secondary">{selectedValues.size}</Badge>
+            <Badge variant="secondary" size="sm">
+              {selectedValues.size}
+            </Badge>
           )}
           {title}
           <ChevronDownIcon />

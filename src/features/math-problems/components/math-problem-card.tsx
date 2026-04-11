@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { formatNumberTruncate } from "@/lib/utils";
 
 export const MathProblemCard = ({
   mathProblem,
@@ -29,15 +30,15 @@ export const MathProblemCard = ({
           <div className="flex items-center gap-2 flex-wrap mt-2">
             <Badge variant="outline">
               <EyeIcon className="size-4" />
-              {mathProblem.views} views
+              {formatNumberTruncate(mathProblem.views)} views
             </Badge>
             <Badge variant="outline">
               <MessageSquareIcon className="size-4" />
-              {mathProblem.commentCount} comments
+              {formatNumberTruncate(mathProblem.commentCount)} comments
             </Badge>
             <Badge variant="outline">
               <ThumbsUpIcon className="size-4" />
-              {mathProblem.upVoteCount} upvotes
+              {formatNumberTruncate(mathProblem.upVoteCount)} upvotes
             </Badge>
           </div>
           <p className="line-clamp-2 text-muted-foreground mt-2">

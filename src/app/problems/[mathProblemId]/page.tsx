@@ -9,9 +9,10 @@ import { CreateCommentForm } from "@/features/comments/components/create-comment
 import { loadSearchParams } from "@/features/comments/lib/params";
 import { getOneMathProblem } from "@/features/math-problems/actions/actions";
 import { IncrementProblemViewCount } from "@/features/math-problems/components/increment-problem-view-count";
-import { ProblemVotes } from "@/features/problem-votes/components/problem-votes";
+import { ProblemVoteButtons } from "@/features/problem-votes/components/problem-vote-buttons";
 import { UserAvatar } from "@/features/user/components/user-avatar";
 import { getCurrentUser } from "@/lib/auth/auth-helpers";
+import { formatNumberTruncate } from "@/lib/utils";
 import {
   ArrowLeftIcon,
   EyeIcon,
@@ -43,7 +44,7 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
   const filters = await loadSearchParams(searchParams);
   const { userId } = await getCurrentUser();
   const mathProblem = await getOneMathProblem(userId, mathProblemId);
-  const data = await getComments({ mathProblemId, ...filters });
+  const data = await getComments({ userId, mathProblemId, ...filters });
   const user = mathProblem.user;
 
   if (!mathProblem) return <div>empty state here</div>;
@@ -70,15 +71,15 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <EyeIcon className="size-4" />
-            {mathProblem.views} views
+            {formatNumberTruncate(mathProblem.views)} views
           </div>
           <div className="flex items-center gap-2">
             <ThumbsUpIcon className="size-4" />
-            {mathProblem.upVoteCount} upvotes
+            {formatNumberTruncate(mathProblem.upVoteCount)} upvotes
           </div>
           <div className="flex items-center gap-2">
             <ThumbsDownIcon className="size-4" />
-            {mathProblem.downVoteCount} downvotes
+            {formatNumberTruncate(mathProblem.downVoteCount)} downvotes
           </div>
         </div>
 
@@ -86,7 +87,7 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
           {mathProblem.content}
         </MarkdownRenderer>
 
-        <ProblemVotes
+        <ProblemVoteButtons
           mathProblemId={mathProblemId}
           currentUserVote={mathProblem.currentUserVote}
         />

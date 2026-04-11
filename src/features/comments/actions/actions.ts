@@ -3,8 +3,8 @@
 import { cacheTag } from "next/cache";
 import { getMathProblemCommentTag } from "../db/cache/comments";
 import { db } from "@/db/db";
-import { CommentTable, user } from "@/db/schema";
-import { asc, count, desc, eq, getTableColumns, SQL } from "drizzle-orm";
+import { CommentTable, CommentVoteTable, user, VoteType } from "@/db/schema";
+import { asc, count, desc, eq, getTableColumns, sql, SQL } from "drizzle-orm";
 import { PAGE_SIZE } from "@/lib/constants";
 import { SORT_BY } from "../lib/params";
 import { ActionOutput } from "@/lib/types";
@@ -14,16 +14,21 @@ import { insertComment } from "../db/comments";
 import { getCurrentUser } from "@/lib/auth/auth-helpers";
 
 export const getComments = async ({
+  userId,
   mathProblemId,
   page,
   sortBy,
 }: {
+  userId: string | null;
   mathProblemId: string;
   page: number;
   sortBy: (typeof SORT_BY)[number];
 }): Promise<{
   comments: (typeof CommentTable.$inferSelect & {
     user: typeof user.$inferSelect | null;
+    upVoteCount: number;
+    downVoteCount: number;
+    currentUserVote: VoteType | null;
   })[];
   metadata: {
     hasPrevPage: boolean;
@@ -45,6 +50,25 @@ export const getComments = async ({
     .select({
       ...getTableColumns(CommentTable),
       user: getTableColumns(user),
+      upVoteCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${CommentVoteTable} cvt
+        WHERE cvt.comment_id = ${CommentTable.id}
+          AND cvt.type = ${"up"}
+      )`,
+      downVoteCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${CommentVoteTable} cvt
+        WHERE cvt.comment_id = ${CommentTable.id}
+          AND cvt.type = ${"down"}
+      )`,
+      currentUserVote: sql<VoteType | null>`(
+        SELECT cvt.type
+        FROM ${CommentVoteTable} cvt
+        JOIN ${CommentTable} ct ON ct.id = cvt.comment_id
+        WHERE cvt.user_id = ${userId}
+          AND cvt.comment_id = ${CommentTable.id}
+      )`,
     })
     .from(CommentTable)
     .leftJoin(user, eq(user.id, CommentTable.userId))

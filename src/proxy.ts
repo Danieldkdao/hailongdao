@@ -14,9 +14,6 @@ export const proxy = async (request: NextRequest) => {
   const existingUser = await db.query.user.findFirst({
     where: eq(user.id, session?.user.id ?? ""),
   });
-  if (!existingUser && !authedRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
-  }
 
   if (existingUser && authedRoutes.includes(pathname)) {
     return NextResponse.redirect(

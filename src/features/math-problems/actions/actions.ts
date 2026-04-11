@@ -22,6 +22,7 @@ import {
   MathProblemTable,
   MathProblemVoteTable,
   user,
+  VoteType,
 } from "@/db/schema";
 import {
   and,
@@ -39,6 +40,7 @@ import {
   getMathProblemGlobalTag,
   getMathProblemIdTag,
   getUserMathProblemTag,
+  revalidateMathProblemCache,
 } from "../db/cache/math-problems";
 import { ActionOutput } from "@/lib/types";
 import { SORT_BY } from "../lib/params";
@@ -260,7 +262,10 @@ export const getMathProblems = async ({
   };
 };
 
-export const getOneMathProblem = async (mathProblemId: string) => {
+export const getOneMathProblem = async (
+  userId: string | null,
+  mathProblemId: string,
+) => {
   "use cache";
   cacheTag(getMathProblemIdTag(mathProblemId));
 
@@ -285,6 +290,13 @@ export const getOneMathProblem = async (mathProblemId: string) => {
         WHERE mpvt.math_problem_id = ${MathProblemTable.id}
           AND mpvt.type = ${"down"}
       )`,
+      currentUserVote: sql<VoteType | null>`(
+        SELECT mpvt.type
+        FROM ${MathProblemVoteTable} mpvt
+        JOIN ${MathProblemTable} mpt ON mpt.id = mpvt.math_problem_id
+        WHERE mpvt.user_id = ${userId}
+          AND mpvt.math_problem_id = ${MathProblemTable.id}
+      )`,
     })
     .from(MathProblemTable)
     .innerJoin(user, eq(user.id, MathProblemTable.userId))
@@ -296,6 +308,18 @@ export const getOneMathProblem = async (mathProblemId: string) => {
     );
 
   return mathProblem;
+};
+
+export const incrementMathProblemViewCount = async (id: string) => {
+  const [updatedProblem] = await db
+    .update(MathProblemTable)
+    .set({
+      views: sql`${MathProblemTable.views} + 1`,
+    })
+    .where(eq(MathProblemTable.id, id))
+    .returning();
+
+  revalidateMathProblemCache(updatedProblem);
 };
 
 export type GetMathProblemsType = ActionOutput<typeof getMathProblems>;

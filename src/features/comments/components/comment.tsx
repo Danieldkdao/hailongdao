@@ -15,8 +15,12 @@ export const Comment = ({
           image={comment.user?.image}
         />
         <div className="flex flex-col gap-2">
-          <span>{comment.user?.name ?? "Anonymous"}</span>
-          <span>Posted on {comment.createdAt.toLocaleDateString()}</span>
+          <span className="font-medium">
+            {comment.user?.name ?? "Anonymous"}
+          </span>
+          <span className="text-muted-foreground">
+            Posted on {comment.createdAt.toLocaleDateString()}
+          </span>
           <MarkdownRenderer>{comment.content}</MarkdownRenderer>
         </div>
       </div>

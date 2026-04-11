@@ -23,7 +23,7 @@ export const getComments = async ({
   sortBy: (typeof SORT_BY)[number];
 }): Promise<{
   comments: (typeof CommentTable.$inferSelect & {
-    user?: typeof user.$inferSelect;
+    user: typeof user.$inferSelect | null;
   })[];
   metadata: {
     hasPrevPage: boolean;
@@ -47,7 +47,7 @@ export const getComments = async ({
       user: getTableColumns(user),
     })
     .from(CommentTable)
-    .innerJoin(user, eq(user.id, CommentTable.userId))
+    .leftJoin(user, eq(user.id, CommentTable.userId))
     .where(eq(CommentTable.mathProblemId, mathProblemId))
     .orderBy(...sortByMap[sortBy])
     .offset(offset)

@@ -37,6 +37,7 @@ import {
 import { cacheTag } from "next/cache";
 import {
   getMathProblemGlobalTag,
+  getMathProblemIdTag,
   getUserMathProblemTag,
 } from "../db/cache/math-problems";
 import { ActionOutput } from "@/lib/types";
@@ -257,6 +258,44 @@ export const getMathProblems = async ({
       totalPages,
     },
   };
+};
+
+export const getOneMathProblem = async (mathProblemId: string) => {
+  "use cache";
+  cacheTag(getMathProblemIdTag(mathProblemId));
+
+  const [mathProblem] = await db
+    .select({
+      ...getTableColumns(MathProblemTable),
+      user: getTableColumns(user),
+      commentCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${CommentTable} ct
+        WHERE ct.math_problem_id = ${MathProblemTable.id}
+      )`,
+      upVoteCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${MathProblemVoteTable} mpvt
+        WHERE mpvt.math_problem_id = ${MathProblemTable.id}
+          AND mpvt.type = ${"up"}
+      )`,
+      downVoteCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${MathProblemVoteTable} mpvt
+        WHERE mpvt.math_problem_id = ${MathProblemTable.id}
+          AND mpvt.type = ${"down"}
+      )`,
+    })
+    .from(MathProblemTable)
+    .innerJoin(user, eq(user.id, MathProblemTable.userId))
+    .where(
+      and(
+        eq(MathProblemTable.id, mathProblemId),
+        eq(MathProblemTable.status, "published"),
+      ),
+    );
+
+  return mathProblem;
 };
 
 export type GetMathProblemsType = ActionOutput<typeof getMathProblems>;

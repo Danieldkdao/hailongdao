@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgEnum, pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { integer, pgEnum, pgTable, text, varchar } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "../helpers";
 import { user } from "./user";
 import { CommentTable } from "./comment";
@@ -21,6 +21,7 @@ export const MathProblemTable = pgTable("math_problems", {
     .notNull(),
   content: text("text").notNull(),
   status: mathProblemStatusEnum("status").notNull(),
+  views: integer("views").notNull().default(0),
   createdAt,
   updatedAt,
 });

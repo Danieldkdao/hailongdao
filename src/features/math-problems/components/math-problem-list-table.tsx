@@ -4,7 +4,7 @@ import { ColumnDef, Table } from "@tanstack/react-table";
 import {
   deleteMathProblems,
   GetUserMathProblemsType,
-  updateMathProblemStatus,
+  updateMathProblemsStatus,
 } from "../actions/actions";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableSortableColumnHeader } from "@/components/data-table/data-table-sortable-column-header";
@@ -13,6 +13,7 @@ import {
   ArchiveIcon,
   EditIcon,
   EllipsisVerticalIcon,
+  EyeIcon,
   FileEditIcon,
   GlobeIcon,
   MessageSquareIcon,
@@ -37,6 +38,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useConfirm } from "@/hooks/use-confirm";
 import { UpdateMathProblemDialog } from "./update-math-problem-dialog";
+import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
 
 export const getMathProblemStatus = (status: MathProblemStatus) => {
   switch (status) {
@@ -114,6 +116,18 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
     },
   },
   {
+    accessorKey: "views",
+    header: ({ column }) => (
+      <DataTableSortableColumnHeader title="View Count" column={column} />
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <EyeIcon className="size-4" />
+        <span>{formatNumberTruncate(row.original.views)}</span>
+      </div>
+    ),
+  },
+  {
     accessorKey: "commentCount",
     header: ({ column }) => (
       <DataTableSortableColumnHeader title="Comment Count" column={column} />
@@ -168,7 +182,6 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
 
 const Toolbar = <T,>({ table }: { table: Table<T> }) => {
   const hiddenRows = table.getCoreRowModel().rows.length - table.getRowCount();
-  const selectedRows = table.getSelectedRowModel().rows.length;
 
   return (
     <div className="flex flex-col gap-2 md:flex-row md:items-center">
@@ -186,6 +199,21 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
           className="pl-9 flex-1"
         />
       </div>
+      {table.getColumn("status") && (
+        <DataTableFacetedFilter
+          column={table.getColumn("status")}
+          title="Status"
+          options={mathProblemStatuses.map((status) => ({
+            label: (
+              <div className="flex items-center gap-2">
+                {getMathProblemStatus(status)}
+              </div>
+            ),
+            value: status,
+            key: status,
+          }))}
+        />
+      )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mt-2 md:mt-0 flex-1">
         {hiddenRows > 0 && (
           <div className="text-sm text-muted-foreground sm:ml-2">
@@ -193,20 +221,10 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
           </div>
         )}
 
-        {selectedRows > 0 && (
-          <div className="flex items-center gap-2">
-            <div className="text-sm text-muted-foreground sm:ml-2">
-              {selectedRows} {selectedRows > 1 ? "rows" : "row"} selected
-            </div>
-            <Button variant="outline">
-              <EditIcon />
-              Set Status
-            </Button>
-            <Button variant="destructive">
-              <Trash2Icon />
-              Delete {selectedRows} {selectedRows > 1 ? "rows" : "row"}
-            </Button>
-          </div>
+        {table.getSelectedRowModel().rows.length > 0 && (
+          <SelectedRowActions
+            table={table as Table<GetUserMathProblemsType[number]>}
+          />
         )}
       </div>
       <DropdownMenu>
@@ -279,7 +297,7 @@ const StatusCell = ({
             onClick={() => {
               startTransition(async () => {
                 setOptimisticStatus(status);
-                const res = await updateMathProblemStatus([id], status);
+                const res = await updateMathProblemsStatus([id], status);
 
                 if (res.error) {
                   toast.error(res.message);
@@ -348,6 +366,112 @@ const ActionCell = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+    </>
+  );
+};
+
+const SelectedRowActions = ({
+  table,
+}: {
+  table: Table<GetUserMathProblemsType[number]>;
+}) => {
+  const selectedRows = table.getSelectedRowModel().rows;
+  const selectedRowsLength = selectedRows.length;
+  const router = useRouter();
+  const [confirmationText, setConfirmationText] = useState({
+    title: "",
+    description: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [ConfirmationDialog, confirm] = useConfirm(
+    confirmationText.title,
+    confirmationText.description,
+  );
+
+  const deleteManyAction = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setConfirmationText({
+      title: "Confirm Multiple Problem Deletion",
+      description: `Are you sure you want to delete ${selectedRowsLength} math ${selectedRowsLength > 1 ? "problems" : "problem"}? This action will cause a permanent loss of data and cannot be undone.`,
+    });
+    const confirmation = await confirm();
+    if (!confirmation) return;
+    const response = await deleteMathProblems(
+      selectedRows.map((row) => row.original.id),
+    );
+    if (response.error) {
+      toast.error(response.message);
+      setIsLoading(false);
+      return;
+    }
+    toast.success(response.message);
+    setIsLoading(false);
+    table.resetRowSelection();
+    router.refresh();
+  };
+
+  const updateStatusAction = async (status: MathProblemStatus) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setConfirmationText({
+      title: "Confirm Multiple Problem Update",
+      description: `Are you sure you want to update ${selectedRowsLength} math ${selectedRowsLength > 1 ? "problems" : "problem"} to have a status of ${status}?`,
+    });
+    const confirmation = await confirm();
+    if (!confirmation) return;
+    const response = await updateMathProblemsStatus(
+      selectedRows.map((row) => row.original.id),
+      status,
+    );
+    if (response.error) {
+      toast.error(response.message);
+      setIsLoading(false);
+      return;
+    }
+    toast.success(response.message);
+    setIsLoading(false);
+    table.resetRowSelection();
+    router.refresh();
+  };
+
+  return (
+    <>
+      <ConfirmationDialog />
+      <div className="flex items-center gap-2">
+        <div className="text-sm text-muted-foreground sm:ml-2">
+          {selectedRowsLength} {selectedRowsLength > 1 ? "rows" : "row"}{" "}
+          selected
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={isLoading}>
+            <Button variant="outline">
+              <EditIcon />
+              Set Status
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {mathProblemStatuses.map((status) => (
+              <DropdownMenuItem
+                key={status}
+                onClick={() => updateStatusAction(status)}
+              >
+                {getMathProblemStatus(status)}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button
+          variant="destructive"
+          onClick={deleteManyAction}
+          disabled={isLoading}
+        >
+          <Trash2Icon />
+          Delete {selectedRowsLength} {selectedRowsLength > 1 ? "rows" : "row"}
+        </Button>
+      </div>
     </>
   );
 };

@@ -1,3 +1,5 @@
+"use client";
+
 import { Setter } from "@/lib/types";
 import { GetUserMathProblemsType } from "../actions/actions";
 import {
@@ -8,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CreateUpdateProblemForm } from "./create-update-problem-form";
+import { useRouter } from "next/navigation";
 
 type UpdateMathProblemDialogProps = {
   open: boolean;
@@ -20,6 +23,7 @@ export const UpdateMathProblemDialog = ({
   setOpen,
   mathProblem,
 }: UpdateMathProblemDialogProps) => {
+  const router = useRouter();
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="flex flex-col w-full max-w-[98%] sm:max-w-[98%]">
@@ -30,7 +34,10 @@ export const UpdateMathProblemDialog = ({
         <div className="overflow-auto flex-1 w-full">
           <CreateUpdateProblemForm
             mathProblem={mathProblem}
-            onFinish={() => setOpen(false)}
+            onFinish={() => {
+              router.refresh();
+              setOpen(false);
+            }}
           />
         </div>
       </DialogContent>

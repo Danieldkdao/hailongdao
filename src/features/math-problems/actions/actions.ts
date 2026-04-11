@@ -21,11 +21,27 @@ import {
   MathProblemStatus,
   MathProblemTable,
   MathProblemVoteTable,
+  user,
 } from "@/db/schema";
-import { desc, eq, getTableColumns, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  ilike,
+  SQL,
+  sql,
+} from "drizzle-orm";
 import { cacheTag } from "next/cache";
-import { getUserMathProblemTag } from "../db/cache/math-problems";
+import {
+  getMathProblemGlobalTag,
+  getUserMathProblemTag,
+} from "../db/cache/math-problems";
 import { ActionOutput } from "@/lib/types";
+import { SORT_BY } from "../lib/params";
+import { PAGE_SIZE } from "@/lib/constants";
 
 export const createMathProblem = async (
   unsafeData: CreateMathProblemSchemaType,
@@ -54,7 +70,7 @@ export const createMathProblem = async (
   };
 };
 
-export const updateMathProblemStatus = async (
+export const updateMathProblemsStatus = async (
   ids: string[],
   unsafeStatus: MathProblemStatus,
 ) => {
@@ -158,4 +174,91 @@ export const getUserMathProblems = async (userId: string) => {
 
   return mathProblems;
 };
+
+const NEW_SORT_BY = [...SORT_BY, ""] as const;
+
+export const getMathProblems = async ({
+  page,
+  sortBy,
+  query,
+}: {
+  page: number;
+  sortBy: (typeof NEW_SORT_BY)[number];
+  query: string;
+}) => {
+  "use cache";
+  cacheTag(getMathProblemGlobalTag());
+
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const commentCount = sql<number>`(
+        SELECT COUNT(*)
+        FROM ${CommentTable} ct
+        WHERE ct.math_problem_id = ${MathProblemTable.id}
+      )`;
+
+  const upVoteCount = sql<number>`(
+        SELECT COUNT(*)
+        FROM ${MathProblemVoteTable} mpvt
+        WHERE mpvt.math_problem_id = ${MathProblemTable.id}
+          AND mpvt.type = ${"up"}
+      )`;
+
+  const sortByMap: Record<(typeof NEW_SORT_BY)[number], SQL<unknown>[]> = {
+    most_recent: [desc(MathProblemTable.createdAt), desc(MathProblemTable.id)],
+    most_liked: [desc(upVoteCount), desc(MathProblemTable.id)],
+    most_comments: [desc(commentCount), desc(MathProblemTable.id)],
+    most_popular: [desc(MathProblemTable.views), desc(MathProblemTable.id)],
+    oldest: [asc(MathProblemTable.createdAt), asc(MathProblemTable.id)],
+    "": [desc(MathProblemTable.createdAt), desc(MathProblemTable.id)],
+  };
+
+  const whereQuery = and(
+    eq(MathProblemTable.status, "published"),
+    ilike(MathProblemTable.title, `%${query}%`),
+  );
+
+  const mathProblems = await db
+    .select({
+      ...getTableColumns(MathProblemTable),
+      user: getTableColumns(user),
+      commentCount,
+      upVoteCount,
+      downVoteCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${MathProblemVoteTable} mpvt
+        WHERE mpvt.math_problem_id = ${MathProblemTable.id}
+          AND mpvt.type = ${"down"}
+      )`,
+    })
+    .from(MathProblemTable)
+    .innerJoin(user, eq(user.id, MathProblemTable.userId))
+    .where(whereQuery)
+    .orderBy(...sortByMap[sortBy])
+    .offset(offset)
+    .limit(PAGE_SIZE);
+
+  const [total] = await db
+    .select({
+      count: count(),
+    })
+    .from(MathProblemTable)
+    .where(whereQuery);
+
+  const hasPrevPage = page > 1;
+  const hasNextPage = page * PAGE_SIZE < total.count;
+  const totalPages = Math.floor(total.count / PAGE_SIZE);
+
+  return {
+    mathProblems,
+    metadata: {
+      hasNextPage,
+      hasPrevPage,
+      totalPages,
+    },
+  };
+};
+
+export type GetMathProblemsType = ActionOutput<typeof getMathProblems>;
+
 export type GetUserMathProblemsType = ActionOutput<typeof getUserMathProblems>;

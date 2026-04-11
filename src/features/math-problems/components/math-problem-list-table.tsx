@@ -39,6 +39,7 @@ import { useRouter } from "next/navigation";
 import { useConfirm } from "@/hooks/use-confirm";
 import { UpdateMathProblemDialog } from "./update-math-problem-dialog";
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
+import Link from "next/link";
 
 export const getMathProblemStatus = (status: MathProblemStatus) => {
   switch (status) {
@@ -356,6 +357,19 @@ const ActionCell = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            asChild
+            disabled={mathProblem.status !== "published"}
+          >
+            <Link
+              href={`/problems/${mathProblem.id}`}
+              target="_blank"
+              rel="noopener"
+            >
+              <EyeIcon />
+              View
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>
             <EditIcon />
             Edit

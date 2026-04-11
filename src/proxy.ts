@@ -17,7 +17,10 @@ export const proxy = async (request: NextRequest) => {
 
   if (existingUser && authedRoutes.includes(pathname)) {
     return NextResponse.redirect(
-      new URL(existingUser.role === "admin" ? "/admin" : "/", request.url),
+      new URL(
+        existingUser.role === "admin" ? "/admin/create" : "/",
+        request.url,
+      ),
     );
   }
 

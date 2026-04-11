@@ -1,4 +1,3 @@
-import { HomeTextEffect } from "@/components/home-text-effect";
 import { getMathProblems } from "@/features/math-problems/actions/actions";
 import { MathCardGrid } from "@/features/math-problems/components/math-card-grid";
 import { MathMainFilters } from "@/features/math-problems/components/math-main-filters";
@@ -16,10 +15,10 @@ const HomePage = (props: HomeProps) => {
   return (
     <div className="flex flex-col items-center py-10 gap-16 px-10">
       <div className="flex flex-col gap-6 mt-32">
-        <div className="flex flex-col items-center gap-1">
-          <h1 className="text-6xl font-bold text-center">Discover A Lot of</h1>
-          <HomeTextEffect />
-        </div>
+        <h1 className="text-6xl font-bold text-center">
+          Fun Problems in{" "}
+          <span className="text-primary">Commutative Algebra</span>
+        </h1>
 
         <Suspense>
           <MathMainFilters />

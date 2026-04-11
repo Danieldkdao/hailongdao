@@ -11,7 +11,7 @@ export const Header = () => {
   return (
     <header className="border-b shadow-sm">
       <div className="md:max-w-5xl py-6 px-4 mx-auto w-full flex justify-between items-center gap-2">
-        <h1 className="text-3xl font-bold">HailongDaoMath</h1>
+        <h1 className="text-3xl font-bold">DaoMath</h1>
         <div className="flex items-center gap-2">
           <Suspense>
             <HeaderSuspense />
@@ -38,7 +38,7 @@ const HeaderSuspense = async () => {
   if (session.user.role === "admin") {
     return (
       <Button asChild>
-        <Link href="/admin">
+        <Link href="/admin/create">
           <LayoutDashboardIcon />
           Dashboard
         </Link>

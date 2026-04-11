@@ -24,6 +24,7 @@ import {
 } from "@uiw/react-md-editor/commands";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Skeleton } from "../ui/skeleton";
+import { katexMacros, rehypeKatexOptions } from "./katex-config";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
   ssr: false,
@@ -158,7 +159,7 @@ export const MarkdownEditor = ({
         className:
           "prose prose-slate max-w-none px-5 py-4 dark:prose-invert prose-headings:tracking-tight prose-pre:overflow-x-auto prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6 prose-li:my-1 prose-blockquote:border-l-4 prose-blockquote:border-border prose-blockquote:pl-4 prose-blockquote:text-muted-foreground [&_.contains-task-list]:list-none [&_.contains-task-list]:pl-0 [&_.task-list-item]:list-none [&_.task-list-item]:pl-0",
         remarkPlugins: [remarkMath],
-        rehypePlugins: [rehypeKatex],
+        rehypePlugins: [[rehypeKatex, rehypeKatexOptions]],
         components: {
           ul: (({ children, ...props }: ComponentPropsWithoutRef<"ul">) => (
             <ul
@@ -196,6 +197,7 @@ export const MarkdownEditor = ({
             ) {
               const html = katex.renderToString(code, {
                 displayMode: true,
+                macros: katexMacros,
                 throwOnError: false,
               });
 

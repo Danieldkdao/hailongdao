@@ -8,6 +8,7 @@ import remarkMath from "remark-math";
 import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { rehypeKatexOptions } from "./katex-config";
 
 const markdownThemeVars = {
   "--color-canvas-default": "transparent",
@@ -199,7 +200,7 @@ export const MarkdownRenderer = ({
       <MDEditor.Markdown
         source={children}
         remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[[rehypeKatex, rehypeKatexOptions]]}
         className="max-w-none min-w-0 bg-transparent text-base [&_.katex-display]:my-6 [&_.katex-display]:w-full [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2 [&_.katex-display>span]:min-w-max [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full"
         style={markdownThemeVars}
         components={markdownComponents}

@@ -20,9 +20,11 @@ import {
   ThumbsUpIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { SearchParams } from "nuqs";
 import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { ProblemDetailSkeleton } from "@/components/async-states";
 
 type ProblemIdProps = {
   params: Promise<{ mathProblemId: string }>;
@@ -31,10 +33,13 @@ type ProblemIdProps = {
 
 const ProblemIdPage = (props: ProblemIdProps) => {
   return (
-    <Suspense fallback={<div>loading...</div>}>
-      <ErrorBoundary fallback={<div>error...</div>}>
+    <Suspense fallback={<ProblemDetailSkeleton />}>
+      <AsyncErrorBoundary
+        title="Couldn't load this problem"
+        description="The problem details or discussion could not be loaded right now."
+      >
         <ProblemIdSuspense {...props} />
-      </ErrorBoundary>
+      </AsyncErrorBoundary>
     </Suspense>
   );
 };
@@ -44,10 +49,9 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
   const filters = await loadSearchParams(searchParams);
   const { userId } = await getCurrentUser();
   const mathProblem = await getOneMathProblem(userId, mathProblemId);
+  if (!mathProblem) notFound();
   const data = await getComments({ userId, mathProblemId, ...filters });
   const user = mathProblem.user;
-
-  if (!mathProblem) return <div>empty state here</div>;
 
   return (
     <div className="py-10 px-6 w-full">

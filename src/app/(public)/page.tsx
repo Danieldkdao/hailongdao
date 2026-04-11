@@ -5,7 +5,11 @@ import { MathMainPagination } from "@/features/math-problems/components/math-mai
 import { loadSearchParams } from "@/features/math-problems/lib/params";
 import { SearchParams } from "nuqs";
 import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import {
+  HomeFiltersSkeleton,
+  MathProblemsGridSkeleton,
+} from "@/components/async-states";
+import { AsyncErrorBoundary } from "@/components/async-error-boundary";
 
 type HomeProps = {
   searchParams: Promise<SearchParams>;
@@ -20,15 +24,24 @@ const HomePage = (props: HomeProps) => {
           <span className="text-primary">Commutative Algebra</span>
         </h1>
 
-        <Suspense>
-          <MathMainFilters />
+        <Suspense fallback={<HomeFiltersSkeleton />}>
+          <AsyncErrorBoundary
+            variant="inline"
+            title="Filters unavailable"
+            description="Search and sorting controls could not be loaded."
+          >
+            <MathMainFilters />
+          </AsyncErrorBoundary>
         </Suspense>
       </div>
       <div className="w-full">
-        <Suspense fallback={<div>loading...</div>}>
-          <ErrorBoundary fallback={<div>error...</div>}>
+        <Suspense fallback={<MathProblemsGridSkeleton />}>
+          <AsyncErrorBoundary
+            title="Couldn't load math problems"
+            description="The problem feed is unavailable right now. Please try again."
+          >
             <HomeSuspense {...props} />
-          </ErrorBoundary>
+          </AsyncErrorBoundary>
         </Suspense>
       </div>
     </div>

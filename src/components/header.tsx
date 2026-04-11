@@ -6,6 +6,10 @@ import Link from "next/link";
 import { UserAvatar } from "@/features/user/components/user-avatar";
 import { Suspense } from "react";
 import { ThemeToggle } from "./theme-toggle";
+import {
+  HeaderActionsSkeleton,
+} from "@/components/async-states";
+import { AsyncErrorBoundary } from "@/components/async-error-boundary";
 
 export const Header = () => {
   return (
@@ -13,8 +17,14 @@ export const Header = () => {
       <div className="md:max-w-5xl py-6 px-4 mx-auto w-full flex justify-between items-center gap-2">
         <h1 className="text-3xl font-bold">DaoMath</h1>
         <div className="flex items-center gap-2">
-          <Suspense>
-            <HeaderSuspense />
+          <Suspense fallback={<HeaderActionsSkeleton />}>
+            <AsyncErrorBoundary
+              variant="inline"
+              title="Header unavailable"
+              description="We couldn't load your account controls right now."
+            >
+              <HeaderSuspense />
+            </AsyncErrorBoundary>
           </Suspense>
           <ThemeToggle />
         </div>

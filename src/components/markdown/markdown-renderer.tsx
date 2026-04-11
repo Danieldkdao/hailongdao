@@ -5,9 +5,13 @@ import "@uiw/react-md-editor/markdown-editor.css";
 import "katex/dist/katex.min.css";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+
+const markdownThemeVars = {
+  "--color-canvas-default": "transparent",
+} as CSSProperties;
 
 const markdownComponents = {
   h1: ({ children, ...props }: ComponentPropsWithoutRef<"h1">) => (
@@ -87,7 +91,10 @@ const markdownComponents = {
     </ol>
   ),
   li: ({ children, ...props }: ComponentPropsWithoutRef<"li">) => (
-    <li {...props} className="break-words pl-1 leading-7 [overflow-wrap:anywhere]">
+    <li
+      {...props}
+      className="break-words pl-1 leading-7 [overflow-wrap:anywhere]"
+    >
       {children}
     </li>
   ),
@@ -186,13 +193,15 @@ export const MarkdownRenderer = ({
     <div
       data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
       className={cn("min-w-0 w-full", className)}
+      style={markdownThemeVars}
     >
-      <div className="wmde-markdown-var" />
+      <div className="wmde-markdown-var" style={markdownThemeVars} />
       <MDEditor.Markdown
         source={children}
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
         className="max-w-none min-w-0 bg-transparent text-base [&_.katex-display]:my-6 [&_.katex-display]:w-full [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2 [&_.katex-display>span]:min-w-max [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full"
+        style={markdownThemeVars}
         components={markdownComponents}
       />
     </div>

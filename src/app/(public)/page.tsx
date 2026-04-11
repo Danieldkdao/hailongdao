@@ -14,7 +14,7 @@ type HomeProps = {
 
 const HomePage = (props: HomeProps) => {
   return (
-    <div className="flex flex-col items-center py-20 gap-16 px-10">
+    <div className="flex flex-col items-center py-10 gap-16 px-10">
       <div className="flex flex-col gap-6 mt-32">
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-6xl font-bold text-center">Discover A Lot of</h1>

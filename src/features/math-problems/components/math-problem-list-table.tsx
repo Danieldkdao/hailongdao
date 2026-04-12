@@ -51,6 +51,7 @@ import {
   getMathProblemStatus,
 } from "./formatters";
 import { UpdateMathProblemDialog } from "./update-math-problem-dialog";
+import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
 
 const getColumns = (
   keywords: (typeof KeywordTable.$inferSelect)[],
@@ -87,7 +88,7 @@ const getColumns = (
           className="max-w-[12rem] lg:max-w-xl truncate text-lg font-medium"
           title={row.original.title}
         >
-          {row.original.title}
+          <MarkdownRenderer>{row.original.title}</MarkdownRenderer>
         </div>
       );
     },
@@ -194,7 +195,7 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
   const hiddenRows = table.getCoreRowModel().rows.length - table.getRowCount();
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full">
       <div className="flex flex-col gap-2 md:flex-row md:items-center">
         <div className="relative w-full max-w-100">
           <div className="absolute top-0 bottom-0 left-0 flex items-center justify-center px-3">
@@ -228,7 +229,7 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
         {table.getColumn("problemStatus") && (
           <DataTableFacetedFilter
             column={table.getColumn("problemStatus")}
-            title="Status"
+            title="Problem Status"
             options={mathProblemProblemStatuses.map((status) => ({
               label: getMathProblemProblemStatus(status),
               value: status,
@@ -275,18 +276,23 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
         </DropdownMenu>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mt-2 md:mt-0 flex-1">
-        {hiddenRows > 0 && (
-          <div className="text-sm text-muted-foreground sm:ml-2">
-            {hiddenRows} {hiddenRows > 1 ? "rows" : "row"} hidden
-          </div>
-        )}
+      <div className="flex flex-wrap items-center gap-2 justify-between w-full">
+        <span className="text-sm text-muted-foreground">
+          Showing all math problems that match your filters.
+        </span>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-y-2 mt-2 md:mt-0">
+          {hiddenRows > 0 && (
+            <div className="text-sm text-muted-foreground sm:ml-2">
+              {hiddenRows} {hiddenRows > 1 ? "rows" : "row"} hidden
+            </div>
+          )}
 
-        {table.getSelectedRowModel().rows.length > 0 && (
-          <SelectedRowActions
-            table={table as Table<GetUserMathProblemsType[number]>}
-          />
-        )}
+          {table.getSelectedRowModel().rows.length > 0 && (
+            <SelectedRowActions
+              table={table as Table<GetUserMathProblemsType[number]>}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -636,7 +642,7 @@ const SelectedRowActions = ({
   return (
     <>
       <ConfirmationDialog />
-      <div className="flex items-center gap-2">
+      <div className="flex items-center flex-wrap gap-2">
         <div className="text-sm text-muted-foreground sm:ml-2">
           {selectedRowsLength} {selectedRowsLength > 1 ? "rows" : "row"}{" "}
           selected

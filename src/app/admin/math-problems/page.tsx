@@ -1,4 +1,7 @@
-import { getUserMathProblems } from "@/features/math-problems/actions/actions";
+import {
+  getAllMathProblems,
+  getUserMathProblems,
+} from "@/features/math-problems/actions/actions";
 import { MathProblemListTable } from "@/features/math-problems/components/math-problem-list-table";
 import { getCurrentUser } from "@/lib/auth/auth-helpers";
 import { hasPermission } from "@/features/user/lib/permissions";
@@ -25,16 +28,16 @@ const MathProblemsPage = () => {
 };
 
 const MathProblemsSuspense = async () => {
-  const [{ userId }, canReadMathProblems] = await Promise.all([
-    getCurrentUser(),
+  const [{ userId, user }, canReadMathProblems] = await Promise.all([
+    getCurrentUser({ allData: true }),
     hasPermission({ mathProblem: ["read"] }),
   ]);
-  if (!userId || !canReadMathProblems) {
+  if (!userId || !user || !canReadMathProblems) {
     redirect("/");
   }
 
   const [mathProblems, keywords] = await Promise.all([
-    getUserMathProblems(userId),
+    user.role === "admin" ? getAllMathProblems() : getUserMathProblems(userId),
     getKeywords(),
   ]);
 

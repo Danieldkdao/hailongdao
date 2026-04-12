@@ -306,6 +306,56 @@ export const getUserMathProblems = async (userId: string) => {
   return mathProblems;
 };
 
+export const getAllMathProblems = async () => {
+  "use cache";
+  cacheTag(getMathProblemGlobalTag());
+
+  const mathProblems = await db
+    .select({
+      ...getTableColumns(MathProblemTable),
+      commentCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${CommentTable} ct
+        WHERE ct.math_problem_id = ${MathProblemTable.id}
+      )`,
+      upVoteCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${MathProblemVoteTable} mpvt
+        WHERE mpvt.math_problem_id = ${MathProblemTable.id}
+          AND mpvt.type = ${"up"}
+      )`,
+      downVoteCount: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${MathProblemVoteTable} mpvt
+        WHERE mpvt.math_problem_id = ${MathProblemTable.id}
+          AND mpvt.type = ${"down"}
+      )`,
+      keywords: sql<{ id: string; keyword: string }[]>`(
+        SELECT COALESCE(
+            jsonb_agg(
+              jsonb_build_object(
+                'id', keywords.keyword_id,
+                'keyword', keywords.keyword
+              )
+            ),
+          '[]'::jsonb
+        )
+        FROM (
+          SELECT
+            kt.id AS keyword_id,
+            kt.keyword AS keyword
+          FROM ${MathProblemKeywordTable} mpkt
+          JOIN ${KeywordTable} kt ON kt.id = mpkt.keyword_id
+          WHERE mpkt.math_problem_id = "math_problems"."id"
+        ) AS keywords
+      )`,
+    })
+    .from(MathProblemTable)
+    .orderBy(desc(MathProblemTable.createdAt), desc(MathProblemTable.id));
+
+  return mathProblems;
+};
+
 type MathProblemSortBy = (typeof SORT_BY)[number] | "";
 
 export const getMathProblems = async ({

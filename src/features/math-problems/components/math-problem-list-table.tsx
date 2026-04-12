@@ -1,16 +1,31 @@
 "use client";
 
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
+import { DataTableSortableColumnHeader } from "@/components/data-table/data-table-sortable-column-header";
+import { DifficultyStars } from "@/components/difficulty-stars";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  MathProblemDifficultyLevel,
+  mathProblemDifficultyLevels,
+  MathProblemStatus,
+  mathProblemStatuses,
+} from "@/db/schema";
+import { useConfirm } from "@/hooks/use-confirm";
+import { formatDate, formatNumberTruncate } from "@/lib/utils";
 import { ColumnDef, Table } from "@tanstack/react-table";
 import {
-  deleteMathProblems,
-  GetUserMathProblemsType,
-  updateMathProblemsStatus,
-} from "../actions/actions";
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTableSortableColumnHeader } from "@/components/data-table/data-table-sortable-column-header";
-import { Button } from "@/components/ui/button";
-import {
   ArchiveIcon,
+  DumbbellIcon,
   EditIcon,
   EllipsisVerticalIcon,
   EyeIcon,
@@ -22,24 +37,17 @@ import {
   ThumbsUpIcon,
   Trash2Icon,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MathProblemStatus, mathProblemStatuses } from "@/db/schema";
-import { formatNumberTruncate } from "@/lib/utils";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { useConfirm } from "@/hooks/use-confirm";
+import {
+  deleteMathProblems,
+  GetUserMathProblemsType,
+  updateMathProblemsDifficultyLevel,
+  updateMathProblemsStatus,
+} from "../actions/actions";
 import { UpdateMathProblemDialog } from "./update-math-problem-dialog";
-import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
-import Link from "next/link";
 
 export const getMathProblemStatus = (status: MathProblemStatus) => {
   switch (status) {
@@ -117,6 +125,18 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
     },
   },
   {
+    accessorKey: "difficultyLevel",
+    header: "Difficulty Level",
+    cell: ({ row }) => {
+      return (
+        <DifficultyLevelCell
+          id={row.original.id}
+          originalDifficultyLevel={row.original.difficultyLevel}
+        />
+      );
+    },
+  },
+  {
     accessorKey: "views",
     header: ({ column }) => (
       <DataTableSortableColumnHeader title="View Count" column={column} />
@@ -170,7 +190,7 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
     header: ({ column }) => (
       <DataTableSortableColumnHeader title="Created At" column={column} />
     ),
-    cell: ({ row }) => row.original.createdAt.toLocaleDateString(),
+    cell: ({ row }) => formatDate(row.original.createdAt),
   },
   {
     id: "actions",
@@ -185,36 +205,76 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
   const hiddenRows = table.getCoreRowModel().rows.length - table.getRowCount();
 
   return (
-    <div className="flex flex-col gap-2 md:flex-row md:items-center">
-      <div className="relative w-full max-w-100">
-        <div className="absolute top-0 bottom-0 left-0 flex items-center justify-center px-3">
-          <SearchIcon className="size-4" />
-        </div>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center">
+        <div className="relative w-full max-w-100">
+          <div className="absolute top-0 bottom-0 left-0 flex items-center justify-center px-3">
+            <SearchIcon className="size-4" />
+          </div>
 
-        <Input
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(e) =>
-            table.getColumn("title")?.setFilterValue(e.target.value)
-          }
-          placeholder="Search math problems by title..."
-          className="pl-9 flex-1"
-        />
+          <Input
+            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            onChange={(e) =>
+              table.getColumn("title")?.setFilterValue(e.target.value)
+            }
+            placeholder="Search math problems by title..."
+            className="pl-9 flex-1"
+          />
+        </div>
+        {table.getColumn("status") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("status")}
+            title="Status"
+            options={mathProblemStatuses.map((status) => ({
+              label: (
+                <div className="flex items-center gap-2">
+                  {getMathProblemStatus(status)}
+                </div>
+              ),
+              value: status,
+              key: status,
+            }))}
+          />
+        )}
+        {table.getColumn("difficultyLevel") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("difficultyLevel")}
+            title="Difficulty Level"
+            options={mathProblemDifficultyLevels.map((level) => ({
+              label: <DifficultyStars difficultyLevel={level} />,
+              value: level,
+              key: level,
+            }))}
+          />
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      {table.getColumn("status") && (
-        <DataTableFacetedFilter
-          column={table.getColumn("status")}
-          title="Status"
-          options={mathProblemStatuses.map((status) => ({
-            label: (
-              <div className="flex items-center gap-2">
-                {getMathProblemStatus(status)}
-              </div>
-            ),
-            value: status,
-            key: status,
-          }))}
-        />
-      )}
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mt-2 md:mt-0 flex-1">
         {hiddenRows > 0 && (
           <div className="text-sm text-muted-foreground sm:ml-2">
@@ -228,30 +288,6 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
           />
         )}
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="ml-auto">
-            Columns
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {table
-            .getAllColumns()
-            .filter((column) => column.getCanHide())
-            .map((column) => {
-              return (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              );
-            })}
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 };
@@ -315,6 +351,50 @@ const StatusCell = ({
   );
 };
 
+const DifficultyLevelCell = ({
+  id,
+  originalDifficultyLevel,
+}: {
+  id: string;
+  originalDifficultyLevel: MathProblemDifficultyLevel;
+}) => {
+  const [optimisticDifficultyLevel, setOptimisticDifficultyLevel] =
+    useOptimistic(originalDifficultyLevel);
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild disabled={isPending}>
+        <Button variant="ghost">
+          <DifficultyStars difficultyLevel={optimisticDifficultyLevel} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {mathProblemDifficultyLevels.map((level) => (
+          <DropdownMenuItem
+            key={level}
+            onClick={() => {
+              startTransition(async () => {
+                setOptimisticDifficultyLevel(level);
+                const res = await updateMathProblemsDifficultyLevel(
+                  [id],
+                  level,
+                );
+
+                if (res.error) {
+                  toast.error(res.message);
+                }
+              });
+            }}
+          >
+            <DifficultyStars difficultyLevel={level} className="size-4" />
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 const ActionCell = ({
   mathProblem,
 }: {
@@ -348,7 +428,7 @@ const ActionCell = ({
       <UpdateMathProblemDialog
         open={open}
         setOpen={setOpen}
-        mathProblem={mathProblem}
+        data={mathProblem}
       />
       <ConfirmationDialog />
       <DropdownMenu>
@@ -450,6 +530,32 @@ const SelectedRowActions = ({
     router.refresh();
   };
 
+  const updateDifficultyLevelAction = async (
+    difficultyLevel: MathProblemDifficultyLevel,
+  ) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setConfirmationText({
+      title: "Confirm Multiple Problem Update",
+      description: `Are you sure you want to update ${selectedRowsLength} math ${selectedRowsLength > 1 ? "problems" : "problem"} to have a difficulty level of ${difficultyLevel}?`,
+    });
+    const confirmation = await confirm();
+    if (!confirmation) return;
+    const response = await updateMathProblemsDifficultyLevel(
+      selectedRows.map((row) => row.original.id),
+      difficultyLevel,
+    );
+    if (response.error) {
+      toast.error(response.message);
+      setIsLoading(false);
+      return;
+    }
+    toast.success(response.message);
+    setIsLoading(false);
+    table.resetRowSelection();
+    router.refresh();
+  };
+
   return (
     <>
       <ConfirmationDialog />
@@ -473,6 +579,25 @@ const SelectedRowActions = ({
                 onClick={() => updateStatusAction(status)}
               >
                 {getMathProblemStatus(status)}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={isLoading}>
+            <Button variant="outline">
+              <DumbbellIcon />
+              Set Difficulty Level
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {mathProblemDifficultyLevels.map((level) => (
+              <DropdownMenuItem
+                key={level}
+                onClick={() => updateDifficultyLevelAction(level)}
+              >
+                <DifficultyStars difficultyLevel={level} className="size-4" />
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

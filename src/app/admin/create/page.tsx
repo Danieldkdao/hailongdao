@@ -1,5 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { getKeywords } from "@/features/keywords/actions/actions";
 import { CreateUpdateProblemForm } from "@/features/math-problems/components/create-update-problem-form";
+import { Suspense } from "react";
 
 const CreateMathProblemPage = () => {
   return (
@@ -13,12 +15,20 @@ const CreateMathProblemPage = () => {
                 Share a problem. Add a nice title and well-structured content.
               </p>
             </div>
-            <CreateUpdateProblemForm />
+            <Suspense>
+              <CreateMathProblemSuspense />
+            </Suspense>
           </CardContent>
         </Card>
       </div>
     </div>
   );
+};
+
+export const CreateMathProblemSuspense = async () => {
+  const keywords = await getKeywords();
+
+  return <CreateUpdateProblemForm keywords={keywords} />;
 };
 
 export default CreateMathProblemPage;

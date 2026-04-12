@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/auth-helpers";
 import {
   createMathProblemSchema,
   CreateMathProblemSchemaType,
+  mathProblemDifficultyLevelSchema,
   mathProblemStatusSchema,
 } from "./schemas";
 import {
@@ -18,6 +19,9 @@ import {
 import { db } from "@/db/db";
 import {
   CommentTable,
+  KeywordTable,
+  MathProblemDifficultyLevel,
+  MathProblemKeywordTable,
   MathProblemStatus,
   MathProblemTable,
   MathProblemVoteTable,
@@ -30,8 +34,10 @@ import {
   count,
   desc,
   eq,
+  exists,
   getTableColumns,
   ilike,
+  or,
   SQL,
   sql,
 } from "drizzle-orm";
@@ -45,6 +51,10 @@ import {
 import { ActionOutput } from "@/lib/types";
 import { SORT_BY } from "../lib/params";
 import { PAGE_SIZE } from "@/lib/constants";
+import {
+  insertMathProblemKeywords,
+  updateMathProblemKeywords,
+} from "@/features/keywords/actions/actions";
 
 export const createMathProblem = async (
   unsafeData: CreateMathProblemSchemaType,
@@ -65,7 +75,16 @@ export const createMathProblem = async (
     };
   }
 
-  await insertMathProblem({ userId, ...data });
+  const { keywords, ...mathProblem } = data;
+
+  const insertedMathProblem = await insertMathProblem({
+    userId,
+    ...mathProblem,
+  });
+  if (insertedMathProblem?.id) {
+    await insertMathProblemKeywords(insertedMathProblem.id, keywords);
+    revalidateMathProblemCache(insertedMathProblem);
+  }
 
   return {
     error: false,
@@ -101,6 +120,36 @@ export const updateMathProblemsStatus = async (
   };
 };
 
+export const updateMathProblemsDifficultyLevel = async (
+  ids: string[],
+  unsafeDifficultyLevel: MathProblemDifficultyLevel,
+) => {
+  const { userId, user } = await getCurrentUser({ allData: true });
+  if (!userId || !user || user.role !== "admin") {
+    return {
+      error: true,
+      message: NO_PERMISSION_MESSAGE,
+    };
+  }
+
+  const { success, data } = mathProblemDifficultyLevelSchema.safeParse(
+    unsafeDifficultyLevel,
+  );
+  if (!success) {
+    return {
+      error: true,
+      message: INVALID_DATA_MESSAGE,
+    };
+  }
+
+  await updateMathProblemsDb(ids, { difficultyLevel: data });
+
+  return {
+    error: false,
+    message: "Math problems difficulty level updated successfully!",
+  };
+};
+
 export const updateMathProblem = async (
   id: string,
   unsafeData: CreateMathProblemSchemaType,
@@ -121,7 +170,13 @@ export const updateMathProblem = async (
     };
   }
 
-  await updateMathProblemsDb([id], data);
+  const { keywords, ...mathProblem } = data;
+
+  const updatedMathProblem = await updateMathProblemsDb([id], mathProblem);
+  if (updatedMathProblem?.id) {
+    await updateMathProblemKeywords(updatedMathProblem.id, keywords);
+    revalidateMathProblemCache(updatedMathProblem);
+  }
 
   return {
     error: false,
@@ -169,6 +224,25 @@ export const getUserMathProblems = async (userId: string) => {
         FROM ${MathProblemVoteTable} mpvt
         WHERE mpvt.math_problem_id = ${MathProblemTable.id}
           AND mpvt.type = ${"down"}
+      )`,
+      keywords: sql<{ id: string; keyword: string }[]>`(
+        SELECT COALESCE(
+            jsonb_agg(
+              jsonb_build_object(
+                'id', keywords.keyword_id,
+                'keyword', keywords.keyword
+              )
+            ),
+          '[]'::jsonb
+        )
+        FROM (
+          SELECT
+            kt.id AS keyword_id,
+            kt.keyword AS keyword
+          FROM ${MathProblemKeywordTable} mpkt
+          JOIN ${KeywordTable} kt ON kt.id = mpkt.keyword_id
+          WHERE mpkt.math_problem_id = "math_problems"."id"
+        ) AS keywords
       )`,
     })
     .from(MathProblemTable)
@@ -218,7 +292,24 @@ export const getMathProblems = async ({
 
   const whereQuery = and(
     eq(MathProblemTable.status, "published"),
-    ilike(MathProblemTable.title, `%${query}%`),
+    or(
+      ilike(MathProblemTable.title, `%${query}%`),
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(MathProblemKeywordTable)
+          .innerJoin(
+            KeywordTable,
+            eq(KeywordTable.id, MathProblemKeywordTable.keywordId),
+          )
+          .where(
+            and(
+              eq(MathProblemKeywordTable.mathProblemId, MathProblemTable.id),
+              ilike(KeywordTable.keyword, `%${query}%`),
+            ),
+          ),
+      ),
+    ),
   );
 
   const mathProblems = await db
@@ -232,6 +323,25 @@ export const getMathProblems = async ({
         FROM ${MathProblemVoteTable} mpvt
         WHERE mpvt.math_problem_id = ${MathProblemTable.id}
           AND mpvt.type = ${"down"}
+      )`,
+      keywords: sql<{ id: string; keyword: string }[]>`(
+        SELECT COALESCE(
+            jsonb_agg(
+              jsonb_build_object(
+                'id', keywords.keyword_id,
+                'keyword', keywords.keyword
+              )
+            ),
+          '[]'::jsonb
+        )
+        FROM (
+          SELECT
+            kt.id AS keyword_id,
+            kt.keyword AS keyword
+          FROM ${MathProblemKeywordTable} mpkt
+          JOIN ${KeywordTable} kt ON kt.id = mpkt.keyword_id
+          WHERE mpkt.math_problem_id = "math_problems"."id"
+        ) AS keywords
       )`,
     })
     .from(MathProblemTable)
@@ -296,6 +406,25 @@ export const getOneMathProblem = async (
         JOIN ${MathProblemTable} mpt ON mpt.id = mpvt.math_problem_id
         WHERE mpvt.user_id = ${userId}
           AND mpvt.math_problem_id = ${MathProblemTable.id}
+      )`,
+      keywords: sql<{ id: string; keyword: string }[]>`(
+        SELECT COALESCE(
+            jsonb_agg(
+              jsonb_build_object(
+                'id', keywords.keyword_id,
+                'keyword', keywords.keyword
+              )
+            ),
+          '[]'::jsonb
+        )
+        FROM (
+          SELECT
+            kt.id AS keyword_id,
+            kt.keyword AS keyword
+          FROM ${MathProblemKeywordTable} mpkt
+          JOIN ${KeywordTable} kt ON kt.id = mpkt.keyword_id
+          WHERE mpkt.math_problem_id = ${mathProblemId}
+        ) AS keywords
       )`,
     })
     .from(MathProblemTable)

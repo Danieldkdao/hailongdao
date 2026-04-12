@@ -8,12 +8,7 @@ import { AsyncErrorBoundary } from "@/components/async-error-boundary";
 const AdminUsersPage = () => {
   return (
     <div className="space-y-4 px-6 py-10">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold">Users</h1>
-        <p className="text-muted-foreground">
-          Manage roles, access, verification, sessions, and bulk user actions.
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold">Users</h1>
       <Suspense fallback={<AdminTableSkeleton columns={7} />}>
         <AsyncErrorBoundary
           title="Couldn't load users"

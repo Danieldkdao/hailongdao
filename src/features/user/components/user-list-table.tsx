@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/hooks/use-confirm";
-import { formatNumberTruncate } from "@/lib/utils";
+import { formatDate, formatNumberTruncate } from "@/lib/utils";
 import { UserAvatar } from "@/features/user/components/user-avatar";
 import {
   banUsers,
@@ -102,15 +102,6 @@ const SORT_OPTIONS: {
   { label: "Username A-Z", value: "username-asc" },
   { label: "Email A-Z", value: "email-asc" },
 ];
-
-const formatDate = (value: Date | null | undefined) => {
-  if (!value) return "Never";
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(value);
-};
 
 const getSortValue = (table: Table<UserRow>): UserSortOption => {
   const [sort] = table.getState().sorting;

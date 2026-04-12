@@ -1,4 +1,8 @@
+import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { ProblemDetailSkeleton } from "@/components/async-states";
+import { DifficultyStars } from "@/components/difficulty-stars";
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getComments } from "@/features/comments/actions/actions";
@@ -15,7 +19,9 @@ import { getCurrentUser } from "@/lib/auth/auth-helpers";
 import { formatNumberTruncate } from "@/lib/utils";
 import {
   ArrowLeftIcon,
+  DumbbellIcon,
   EyeIcon,
+  TagIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
 } from "lucide-react";
@@ -23,8 +29,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SearchParams } from "nuqs";
 import { Suspense } from "react";
-import { AsyncErrorBoundary } from "@/components/async-error-boundary";
-import { ProblemDetailSkeleton } from "@/components/async-states";
 
 type ProblemIdProps = {
   params: Promise<{ mathProblemId: string }>;
@@ -71,6 +75,51 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
           </div>
           <span>•</span>
           <span>Posted on {mathProblem.createdAt.toLocaleDateString()}</span>
+        </div>
+        <div className="flex flex-col gap-2 items-center">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <DumbbellIcon className="size-4" />
+              Difficulty
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge
+                variant="outline"
+                size="md"
+                className="rounded-full bg-background/80 px-3 py-1.5"
+              >
+                <DifficultyStars
+                  difficultyLevel={mathProblem.difficultyLevel}
+                  className="size-4"
+                />
+                <span className="ml-1">{mathProblem.difficultyLevel} / 5</span>
+              </Badge>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <TagIcon className="size-4" />
+              Keywords
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {mathProblem.keywords.length > 0 ? (
+                mathProblem.keywords.map((keyword) => (
+                  <Badge
+                    key={keyword.id}
+                    variant="secondary"
+                    size="sm"
+                    className="rounded-full px-3 py-1"
+                  >
+                    {keyword.keyword}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  No keywords added yet.
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">

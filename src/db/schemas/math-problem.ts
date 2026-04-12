@@ -4,6 +4,7 @@ import { createdAt, id, updatedAt } from "../helpers";
 import { user } from "./user";
 import { CommentTable } from "./comment";
 import { MathProblemVoteTable } from "./math-problem-vote";
+import { MathProblemKeywordTable } from "./math-problem-keyword";
 
 export const mathProblemStatuses = ["draft", "published", "archived"] as const;
 export type MathProblemStatus = (typeof mathProblemStatuses)[number];
@@ -11,6 +12,10 @@ export const mathProblemStatusEnum = pgEnum(
   "math_problem_statuses",
   mathProblemStatuses,
 );
+
+export const mathProblemDifficultyLevels = [1, 2, 3, 4, 5] as const;
+export type MathProblemDifficultyLevel =
+  (typeof mathProblemDifficultyLevels)[number];
 
 export const MathProblemTable = pgTable("math_problems", {
   id,
@@ -22,6 +27,9 @@ export const MathProblemTable = pgTable("math_problems", {
   content: text("text").notNull(),
   status: mathProblemStatusEnum("status").notNull(),
   views: integer("views").notNull().default(0),
+  difficultyLevel: integer("difficulty_level")
+    .$type<MathProblemDifficultyLevel>()
+    .notNull(),
   createdAt,
   updatedAt,
 });
@@ -35,5 +43,6 @@ export const mathProblemRelations = relations(
     }),
     comments: many(CommentTable),
     votes: many(MathProblemVoteTable),
+    keywords: many(MathProblemKeywordTable),
   }),
 );

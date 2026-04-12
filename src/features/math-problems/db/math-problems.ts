@@ -12,19 +12,23 @@ export const insertMathProblem = async (
     .returning();
 
   revalidateMathProblemCache(insertedMathProblem);
+
+  return insertedMathProblem;
 };
 
 export const updateMathProblems = async (
   ids: string[],
   mathProblem: Partial<typeof MathProblemTable.$inferSelect>,
 ) => {
-  const [insertedMathProblem] = await db
+  const [updatedMathProblem] = await db
     .update(MathProblemTable)
     .set(mathProblem)
     .where(inArray(MathProblemTable.id, ids))
     .returning();
 
-  revalidateMathProblemCache(insertedMathProblem);
+  revalidateMathProblemCache(updatedMathProblem);
+
+  return updatedMathProblem;
 };
 
 export const deleteMathProblems = async (ids: string[]) => {

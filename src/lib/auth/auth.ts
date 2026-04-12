@@ -1,6 +1,7 @@
 import { envServer } from "@/data/data/server";
 import { db } from "@/db/db";
 import { sendVerificationOtp } from "@/services/mailjet/emails/send-verification-otp";
+import { ac, roles } from "@/features/user/lib/access-control";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins/email-otp";
@@ -33,7 +34,10 @@ export const auth = betterAuth({
         await sendVerificationOtp(data);
       },
     }),
-    admin(),
+    admin({
+      ac,
+      roles,
+    }),
     username(),
   ],
   session: {

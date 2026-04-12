@@ -36,6 +36,7 @@ import {
   eq,
   exists,
   getTableColumns,
+  inArray,
   ilike,
   or,
   SQL,
@@ -55,17 +56,100 @@ import {
   insertMathProblemKeywords,
   updateMathProblemKeywords,
 } from "@/features/keywords/actions/actions";
+import { hasPermissionForUser } from "@/features/user/lib/permissions";
+
+const getAuthorizedMathProblemUser = async () => {
+  const { userId, user } = await getCurrentUser({ allData: true });
+  if (!userId || !user) return null;
+
+  return {
+    user,
+    userId,
+  };
+};
+
+const userOwnsMathProblems = async (userId: string, ids: string[]) => {
+  if (ids.length === 0) return false;
+
+  const [result] = await db
+    .select({
+      count: count(),
+    })
+    .from(MathProblemTable)
+    .where(
+      and(inArray(MathProblemTable.id, ids), eq(MathProblemTable.userId, userId)),
+    );
+
+  return result.count === ids.length;
+};
+
+const requireMathProblemPermission = async ({
+  ownPermission,
+  allPermission,
+  ids,
+}: {
+  ownPermission: "create" | "read" | "update" | "delete";
+  allPermission?: "read-all" | "update-all" | "delete-all";
+  ids?: string[];
+}) => {
+  const authorizedUser = await getAuthorizedMathProblemUser();
+  if (!authorizedUser) {
+    return {
+      error: true as const,
+      message: NO_PERMISSION_MESSAGE,
+    };
+  }
+
+  const { user, userId } = authorizedUser;
+  const hasAllPermission = allPermission
+    ? await hasPermissionForUser({
+        permissions: { mathProblem: [allPermission] },
+        role: user.role,
+        userId,
+      })
+    : false;
+
+  if (hasAllPermission) {
+    return {
+      error: false as const,
+      user,
+      userId,
+    };
+  }
+
+  const hasOwnPermission = await hasPermissionForUser({
+    permissions: { mathProblem: [ownPermission] },
+    role: user.role,
+    userId,
+  });
+  if (!hasOwnPermission) {
+    return {
+      error: true as const,
+      message: NO_PERMISSION_MESSAGE,
+    };
+  }
+
+  if (ids?.length && !(await userOwnsMathProblems(userId, ids))) {
+    return {
+      error: true as const,
+      message: NO_PERMISSION_MESSAGE,
+    };
+  }
+
+  return {
+    error: false as const,
+    user,
+    userId,
+  };
+};
 
 export const createMathProblem = async (
   unsafeData: CreateMathProblemSchemaType,
 ) => {
-  const { userId, user } = await getCurrentUser({ allData: true });
-  if (!userId || user?.role !== "admin") {
-    return {
-      error: true,
-      message: NO_PERMISSION_MESSAGE,
-    };
-  }
+  const authorizedUser = await requireMathProblemPermission({
+    ownPermission: "create",
+  });
+  if (authorizedUser.error) return authorizedUser;
 
   const { success, data } = createMathProblemSchema.safeParse(unsafeData);
   if (!success) {
@@ -78,7 +162,7 @@ export const createMathProblem = async (
   const { keywords, ...mathProblem } = data;
 
   const insertedMathProblem = await insertMathProblem({
-    userId,
+    userId: authorizedUser.userId,
     ...mathProblem,
   });
   if (insertedMathProblem?.id) {
@@ -96,13 +180,12 @@ export const updateMathProblemsStatus = async (
   ids: string[],
   unsafeStatus: MathProblemStatus,
 ) => {
-  const { userId, user } = await getCurrentUser({ allData: true });
-  if (!userId || !user || user.role !== "admin") {
-    return {
-      error: true,
-      message: NO_PERMISSION_MESSAGE,
-    };
-  }
+  const authorizedUser = await requireMathProblemPermission({
+    ownPermission: "update",
+    allPermission: "update-all",
+    ids,
+  });
+  if (authorizedUser.error) return authorizedUser;
 
   const { success, data } = mathProblemStatusSchema.safeParse(unsafeStatus);
   if (!success) {
@@ -124,13 +207,12 @@ export const updateMathProblemsDifficultyLevel = async (
   ids: string[],
   unsafeDifficultyLevel: MathProblemDifficultyLevel,
 ) => {
-  const { userId, user } = await getCurrentUser({ allData: true });
-  if (!userId || !user || user.role !== "admin") {
-    return {
-      error: true,
-      message: NO_PERMISSION_MESSAGE,
-    };
-  }
+  const authorizedUser = await requireMathProblemPermission({
+    ownPermission: "update",
+    allPermission: "update-all",
+    ids,
+  });
+  if (authorizedUser.error) return authorizedUser;
 
   const { success, data } = mathProblemDifficultyLevelSchema.safeParse(
     unsafeDifficultyLevel,
@@ -154,13 +236,12 @@ export const updateMathProblem = async (
   id: string,
   unsafeData: CreateMathProblemSchemaType,
 ) => {
-  const { userId, user } = await getCurrentUser({ allData: true });
-  if (!userId || !user || user.role !== "admin") {
-    return {
-      error: true,
-      message: NO_PERMISSION_MESSAGE,
-    };
-  }
+  const authorizedUser = await requireMathProblemPermission({
+    ownPermission: "update",
+    allPermission: "update-all",
+    ids: [id],
+  });
+  if (authorizedUser.error) return authorizedUser;
 
   const { success, data } = createMathProblemSchema.safeParse(unsafeData);
   if (!success) {
@@ -185,13 +266,12 @@ export const updateMathProblem = async (
 };
 
 export const deleteMathProblems = async (ids: string[]) => {
-  const { userId, user } = await getCurrentUser({ allData: true });
-  if (!userId || !user || user.role !== "admin") {
-    return {
-      error: true,
-      message: NO_PERMISSION_MESSAGE,
-    };
-  }
+  const authorizedUser = await requireMathProblemPermission({
+    ownPermission: "delete",
+    allPermission: "delete-all",
+    ids,
+  });
+  if (authorizedUser.error) return authorizedUser;
 
   await deleteMathProblemsDb(ids);
 
@@ -252,7 +332,7 @@ export const getUserMathProblems = async (userId: string) => {
   return mathProblems;
 };
 
-const NEW_SORT_BY = [...SORT_BY, ""] as const;
+type MathProblemSortBy = (typeof SORT_BY)[number] | "";
 
 export const getMathProblems = async ({
   page,
@@ -260,7 +340,7 @@ export const getMathProblems = async ({
   query,
 }: {
   page: number;
-  sortBy: (typeof NEW_SORT_BY)[number];
+  sortBy: MathProblemSortBy;
   query: string;
 }) => {
   "use cache";
@@ -281,7 +361,7 @@ export const getMathProblems = async ({
           AND mpvt.type = ${"up"}
       )`;
 
-  const sortByMap: Record<(typeof NEW_SORT_BY)[number], SQL<unknown>[]> = {
+  const sortByMap: Record<MathProblemSortBy, SQL<unknown>[]> = {
     most_recent: [desc(MathProblemTable.createdAt), desc(MathProblemTable.id)],
     most_liked: [desc(upVoteCount), desc(MathProblemTable.id)],
     most_comments: [desc(commentCount), desc(MathProblemTable.id)],

@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { getKeywords } from "@/features/keywords/actions/actions";
 import { CreateUpdateProblemForm } from "@/features/math-problems/components/create-update-problem-form";
+import { hasPermission } from "@/features/user/lib/permissions";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 const CreateMathProblemPage = () => {
@@ -26,6 +28,11 @@ const CreateMathProblemPage = () => {
 };
 
 export const CreateMathProblemSuspense = async () => {
+  const canCreateMathProblems = await hasPermission({ mathProblem: ["create"] });
+  if (!canCreateMathProblems) {
+    redirect("/");
+  }
+
   const keywords = await getKeywords();
 
   return <CreateUpdateProblemForm keywords={keywords} />;

@@ -12,7 +12,7 @@ import { CommentTable } from "./comment";
 import { MathProblemVoteTable } from "./math-problem-vote";
 import { CommentVoteTable } from "./comment-vote";
 
-export const userRoles = ["user", "admin"] as const;
+export const userRoles = ["user", "contributor", "admin"] as const;
 export type UserRole = (typeof userRoles)[number];
 export const userRoleEnum = pgEnum("user_roles", userRoles);
 

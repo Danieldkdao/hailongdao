@@ -12,6 +12,8 @@ import { UserAvatar } from "@/features/user/components/user-avatar";
 import { authClient } from "@/lib/auth/auth-client";
 import { cn } from "@/lib/utils";
 import { LogOutIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export const AppSidebarUserClient = ({
   name,
@@ -22,6 +24,8 @@ export const AppSidebarUserClient = ({
   email: string;
   image?: string | null;
 }) => {
+  const router = useRouter();
+
   return (
     <SidebarFooter>
       <DropdownMenu>
@@ -70,7 +74,19 @@ export const AppSidebarUserClient = ({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
-            onClick={() => authClient.signOut()}
+            onClick={async () => {
+              await authClient.signOut({
+                fetchOptions: {
+                  onSuccess: () => {
+                    toast.success("User signed out successfully!");
+                    router.push("/");
+                  },
+                  onError: (error) => {
+                    toast.error(error.error.message || "");
+                  },
+                },
+              });
+            }}
           >
             <LogOutIcon />
             <span>Sign Out</span>

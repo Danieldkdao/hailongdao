@@ -4,6 +4,8 @@ import { getUsers } from "@/features/user/actions/action";
 import { UserListTable } from "@/features/user/components/user-list-table";
 import { AdminTableSkeleton } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { hasPermission } from "@/features/user/lib/permissions";
+import { redirect } from "next/navigation";
 
 const AdminUsersPage = () => {
   return (
@@ -22,8 +24,13 @@ const AdminUsersPage = () => {
 };
 
 const AdminUsersSuspense = async () => {
-  const { userId, user } = await getCurrentUser({ allData: true });
-  if (!userId || !user || user.role !== "admin") return null;
+  const [{ userId }, canListUsers] = await Promise.all([
+    getCurrentUser(),
+    hasPermission({ user: ["list"] }),
+  ]);
+  if (!userId || !canListUsers) {
+    redirect("/");
+  }
 
   const users = await getUsers();
 

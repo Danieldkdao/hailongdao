@@ -4,11 +4,23 @@ import { AppSidebarUser } from "./app-sidebar-user";
 import { Suspense } from "react";
 import { SidebarUserSkeleton } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { hasPermission } from "@/features/user/lib/permissions";
 
-export const AppSidebar = () => {
+export const AppSidebar = async () => {
+  const [canCreateMathProblems, canReadMathProblems, canManageUsers] =
+    await Promise.all([
+      hasPermission({ mathProblem: ["create"] }),
+      hasPermission({ mathProblem: ["read"] }),
+      hasPermission({ user: ["list"] }),
+    ]);
+
   return (
     <Sidebar collapsible="icon">
-      <AppSidebarMain />
+      <AppSidebarMain
+        canCreateMathProblems={canCreateMathProblems}
+        canReadMathProblems={canReadMathProblems}
+        canManageUsers={canManageUsers}
+      />
       <Suspense fallback={<SidebarUserSkeleton />}>
         <AsyncErrorBoundary
           variant="sidebar"

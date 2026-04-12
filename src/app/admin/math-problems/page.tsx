@@ -1,9 +1,11 @@
 import { getUserMathProblems } from "@/features/math-problems/actions/actions";
 import { MathProblemListTable } from "@/features/math-problems/components/math-problem-list-table";
 import { getCurrentUser } from "@/lib/auth/auth-helpers";
+import { hasPermission } from "@/features/user/lib/permissions";
 import { Suspense } from "react";
 import { AdminTableSkeleton } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { redirect } from "next/navigation";
 
 const MathProblemsPage = () => {
   return (
@@ -22,8 +24,13 @@ const MathProblemsPage = () => {
 };
 
 const MathProblemsSuspense = async () => {
-  const { userId, user } = await getCurrentUser({ allData: true });
-  if (!userId || !user || user.role !== "admin") return null;
+  const [{ userId }, canReadMathProblems] = await Promise.all([
+    getCurrentUser(),
+    hasPermission({ mathProblem: ["read"] }),
+  ]);
+  if (!userId || !canReadMathProblems) {
+    redirect("/");
+  }
 
   const mathProblems = await getUserMathProblems(userId);
 

@@ -4,6 +4,7 @@ import { auth } from "./lib/auth/auth";
 import { db } from "./db/db";
 import { eq } from "drizzle-orm";
 import { user } from "./db/schema";
+import { hasPermissionForUser } from "./features/user/lib/permissions";
 
 const authedRoutes = ["/sign-in", "/sign-up", "/forgot-password"];
 
@@ -14,17 +15,37 @@ export const proxy = async (request: NextRequest) => {
   const existingUser = await db.query.user.findFirst({
     where: eq(user.id, session?.user.id ?? ""),
   });
+  const canAccessAdminDashboard = existingUser
+    ? (await hasPermissionForUser({
+        permissions: { mathProblem: ["read"] },
+        role: existingUser.role,
+        userId: existingUser.id,
+      })) ||
+      (await hasPermissionForUser({
+        permissions: { user: ["list"] },
+        role: existingUser.role,
+        userId: existingUser.id,
+      }))
+    : false;
+  const canManageUsers = existingUser
+    ? await hasPermissionForUser({
+        permissions: { user: ["list"] },
+        role: existingUser.role,
+        userId: existingUser.id,
+      })
+    : false;
 
   if (existingUser && authedRoutes.includes(pathname)) {
     return NextResponse.redirect(
-      new URL(
-        existingUser.role === "admin" ? "/admin/create" : "/",
-        request.url,
-      ),
+      new URL(canAccessAdminDashboard ? "/admin/create" : "/", request.url),
     );
   }
 
-  if (pathname.startsWith("/admin") && existingUser?.role !== "admin") {
+  if (pathname === "/admin/users" && !canManageUsers) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (pathname.startsWith("/admin") && !canAccessAdminDashboard) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

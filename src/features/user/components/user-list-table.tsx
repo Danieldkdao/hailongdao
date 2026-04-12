@@ -103,6 +103,55 @@ const SORT_OPTIONS: {
   { label: "Email A-Z", value: "email-asc" },
 ];
 
+const ROLE_OPTIONS: {
+  key: UserRoleFilter;
+  value: UserRoleFilter;
+  label: string;
+  actionLabel: string;
+  icon: typeof ShieldIcon;
+}[] = [
+  {
+    key: "admin",
+    value: "admin",
+    label: "Admin",
+    actionLabel: "Make Admin",
+    icon: ShieldIcon,
+  },
+  {
+    key: "contributor",
+    value: "contributor",
+    label: "Contributor",
+    actionLabel: "Make Contributor",
+    icon: UserCogIcon,
+  },
+  {
+    key: "user",
+    value: "user",
+    label: "User",
+    actionLabel: "Make User",
+    icon: UsersIcon,
+  },
+] as const;
+
+const getRoleOption = (role: UserRoleFilter) => {
+  return ROLE_OPTIONS.find((option) => option.value === role) ?? ROLE_OPTIONS[0];
+};
+
+const getRoleConfirmationCopy = ({
+  count,
+  role,
+}: {
+  count: number;
+  role: UserRoleFilter;
+}) => {
+  const roleOption = getRoleOption(role);
+  const article = /^[aeiou]/i.test(roleOption.label) ? "an" : "a";
+
+  return `Are you sure you want to change ${count} ${
+    count === 1 ? "user" : "users"
+  } to ${count === 1 ? `${article} ${roleOption.label.toLowerCase()}` : `${roleOption.label.toLowerCase()}s`}?`;
+};
+
 const getSortValue = (table: Table<UserRow>): UserSortOption => {
   const [sort] = table.getState().sorting;
 
@@ -331,28 +380,16 @@ const Toolbar = ({
           <DataTableFacetedFilter
             column={table.getColumn("role")}
             title="Role"
-            options={[
-              {
-                key: "admin",
-                value: "admin",
-                label: (
-                  <div className="flex items-center gap-2">
-                    <ShieldIcon className="size-4" />
-                    Admin
-                  </div>
-                ),
-              },
-              {
-                key: "user",
-                value: "user",
-                label: (
-                  <div className="flex items-center gap-2">
-                    <UsersIcon className="size-4" />
-                    User
-                  </div>
-                ),
-              },
-            ]}
+            options={ROLE_OPTIONS.map((option) => ({
+              key: option.key,
+              value: option.value,
+              label: (
+                <div className="flex items-center gap-2">
+                  <option.icon className="size-4" />
+                  {option.label}
+                </div>
+              ),
+            }))}
           />
           <DataTableFacetedFilter
             column={table.getColumn("accessStatus")}
@@ -496,59 +533,63 @@ const RoleCell = ({
   const router = useRouter();
   const [role, setRole] = useState(user.role);
   const [isPending, startTransition] = useTransition();
+  const [confirmationText, setConfirmationText] = useState({
+    title: "Confirm Role Change",
+    description: "",
+  });
+  const [ConfirmationDialog, confirm] = useConfirm(
+    confirmationText.title,
+    confirmationText.description,
+  );
   const isCurrentUser = user.id === currentUserId;
+  const currentRole = getRoleOption(role);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={isPending}>
-        <Button variant="ghost" className="justify-start px-2">
-          {role === "admin" ? <ShieldIcon /> : <UsersIcon />}
-          {role === "admin" ? "Admin" : "User"}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuItem
-          disabled={role === "admin"}
-          onClick={() => {
-            startTransition(async () => {
-              const response = await updateUsersRole([user.id], "admin");
+    <>
+      <ConfirmationDialog />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={isPending}>
+          <Button variant="ghost" className="justify-start px-2">
+            <currentRole.icon />
+            {currentRole.label}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {ROLE_OPTIONS.map((roleOption) => (
+            <DropdownMenuItem
+              key={roleOption.value}
+              disabled={role === roleOption.value || (isCurrentUser && roleOption.value !== "admin")}
+              onClick={async () => {
+                setConfirmationText({
+                  title: "Confirm Role Change",
+                  description: getRoleConfirmationCopy({
+                    count: 1,
+                    role: roleOption.value,
+                  }),
+                });
+                const confirmation = await confirm();
+                if (!confirmation) return;
 
-              if (response.error) {
-                toast.error(response.message);
-                return;
-              }
+                startTransition(async () => {
+                  const response = await updateUsersRole([user.id], roleOption.value);
+                  if (response.error) {
+                    toast.error(response.message);
+                    return;
+                  }
 
-              setRole("admin");
-              toast.success(response.message);
-              router.refresh();
-            });
-          }}
-        >
-          <ShieldIcon />
-          Admin
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled={role === "user" || isCurrentUser}
-          onClick={() => {
-            startTransition(async () => {
-              const response = await updateUsersRole([user.id], "user");
-
-              if (response.error) {
-                toast.error(response.message);
-                return;
-              }
-
-              setRole("user");
-              toast.success(response.message);
-              router.refresh();
-            });
-          }}
-        >
-          <UsersIcon />
-          User
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                  setRole(roleOption.value);
+                  toast.success(response.message);
+                  router.refresh();
+                });
+              }}
+            >
+              <roleOption.icon />
+              {roleOption.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 };
 
@@ -825,32 +866,34 @@ const SelectedRowActions = ({
           {selectedCount} {selectedCount === 1 ? "row" : "rows"} selected
         </div>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild disabled={isPending}>
-            <Button variant="outline" size="sm">
-              <UserCogIcon />
-              Set Role
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+        <DropdownMenuTrigger asChild disabled={isPending}>
+          <Button variant="outline" size="sm">
+            <UserCogIcon />
+            Set Role
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {ROLE_OPTIONS.map((roleOption) => (
             <DropdownMenuItem
+              key={roleOption.value}
+              disabled={includesCurrentUser && roleOption.value !== "admin"}
               onClick={() =>
-                runQuickAction(() => updateUsersRole(selectedUserIds, "admin"))
+                runConfirmedAction({
+                  title: "Confirm Role Change",
+                  description: getRoleConfirmationCopy({
+                    count: selectedRows.length,
+                    role: roleOption.value,
+                  }),
+                  action: () => updateUsersRole(selectedUserIds, roleOption.value),
+                })
               }
             >
-              <ShieldIcon />
-              Make Admin
+              <roleOption.icon />
+              {roleOption.actionLabel}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={includesCurrentUser}
-              onClick={() =>
-                runQuickAction(() => updateUsersRole(selectedUserIds, "user"))
-              }
-            >
-              <UsersIcon />
-              Make User
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger
             asChild

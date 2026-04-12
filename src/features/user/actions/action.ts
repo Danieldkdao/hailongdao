@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { cacheTag } from "next/cache";
-import { desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { desc, getTableColumns, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth/auth";
 import { getCurrentUser } from "@/lib/auth/auth-helpers";
 import { db } from "@/db/db";
@@ -14,6 +14,10 @@ import {
 } from "@/lib/auth/constants";
 import { ActionOutput } from "@/lib/types";
 import { getUserGlobalTag, revalidateUserCache } from "../db/cache/users";
+import {
+  AppPermissions,
+  hasPermissionForUser,
+} from "@/features/user/lib/permissions";
 
 const USER_BAN_DURATIONS = {
   day: 60 * 60 * 24,
@@ -24,7 +28,7 @@ const USER_BAN_DURATIONS = {
 export type UserBanDuration = keyof typeof USER_BAN_DURATIONS;
 
 const isUserRole = (value: string): value is UserRole => {
-  return value === "admin" || value === "user";
+  return ["admin", "contributor", "user"].includes(value);
 };
 
 const getActionErrorMessage = (error: unknown) => {
@@ -44,10 +48,18 @@ const revalidateUsers = (userIds: string[]) => {
   });
 };
 
-const requireAdminUser = async () => {
+const requirePermission = async (permissions: AppPermissions) => {
   const { userId, user } = await getCurrentUser({ allData: true });
 
-  if (!userId || !user || user.role !== "admin") {
+  if (
+    !userId ||
+    !user ||
+    !(await hasPermissionForUser({
+      permissions,
+      role: user.role,
+      userId,
+    }))
+  ) {
     return {
       error: true as const,
       message: NO_PERMISSION_MESSAGE,
@@ -85,13 +97,12 @@ export const getUsers = async () => {
       commentCount,
     })
     .from(user)
-    .where(eq(user.role, "user"))
     .orderBy(desc(user.createdAt), desc(user.id));
 };
 
 export const updateUsersRole = async (userIds: string[], role: string) => {
-  const adminUser = await requireAdminUser();
-  if (adminUser.error) return adminUser;
+  const authorizedUser = await requirePermission({ user: ["set-role"] });
+  if (authorizedUser.error) return authorizedUser;
 
   if (!isUserRole(role) || userIds.length === 0) {
     return {
@@ -100,7 +111,7 @@ export const updateUsersRole = async (userIds: string[], role: string) => {
     };
   }
 
-  if (role === "user" && userIds.includes(adminUser.userId)) {
+  if (role !== "admin" && userIds.includes(authorizedUser.userId)) {
     return {
       error: true,
       message: "You cannot remove your own admin access.",
@@ -140,8 +151,8 @@ export const updateUsersEmailVerification = async (
   userIds: string[],
   emailVerified: boolean,
 ) => {
-  const adminUser = await requireAdminUser();
-  if (adminUser.error) return adminUser;
+  const authorizedUser = await requirePermission({ user: ["update"] });
+  if (authorizedUser.error) return authorizedUser;
 
   if (userIds.length === 0) {
     return {
@@ -188,8 +199,8 @@ export const banUsers = async (
   duration: UserBanDuration,
   banReason = "Suspended by an administrator.",
 ) => {
-  const adminUser = await requireAdminUser();
-  if (adminUser.error) return adminUser;
+  const authorizedUser = await requirePermission({ user: ["ban"] });
+  if (authorizedUser.error) return authorizedUser;
 
   if (userIds.length === 0 || !(duration in USER_BAN_DURATIONS)) {
     return {
@@ -198,7 +209,7 @@ export const banUsers = async (
     };
   }
 
-  if (userIds.includes(adminUser.userId)) {
+  if (userIds.includes(authorizedUser.userId)) {
     return {
       error: true,
       message: "You cannot ban your own account.",
@@ -236,8 +247,8 @@ export const banUsers = async (
 };
 
 export const unbanUsers = async (userIds: string[]) => {
-  const adminUser = await requireAdminUser();
-  if (adminUser.error) return adminUser;
+  const authorizedUser = await requirePermission({ user: ["ban"] });
+  if (authorizedUser.error) return authorizedUser;
 
   if (userIds.length === 0) {
     return {
@@ -275,8 +286,8 @@ export const unbanUsers = async (userIds: string[]) => {
 };
 
 export const revokeUsersSessions = async (userIds: string[]) => {
-  const adminUser = await requireAdminUser();
-  if (adminUser.error) return adminUser;
+  const authorizedUser = await requirePermission({ session: ["revoke"] });
+  if (authorizedUser.error) return authorizedUser;
 
   if (userIds.length === 0) {
     return {
@@ -285,7 +296,7 @@ export const revokeUsersSessions = async (userIds: string[]) => {
     };
   }
 
-  if (userIds.includes(adminUser.userId)) {
+  if (userIds.includes(authorizedUser.userId)) {
     return {
       error: true,
       message: "You cannot revoke your own active sessions from this table.",
@@ -321,8 +332,8 @@ export const revokeUsersSessions = async (userIds: string[]) => {
 };
 
 export const deleteUsers = async (userIds: string[]) => {
-  const adminUser = await requireAdminUser();
-  if (adminUser.error) return adminUser;
+  const authorizedUser = await requirePermission({ user: ["delete"] });
+  if (authorizedUser.error) return authorizedUser;
 
   if (userIds.length === 0) {
     return {
@@ -331,7 +342,7 @@ export const deleteUsers = async (userIds: string[]) => {
     };
   }
 
-  if (userIds.includes(adminUser.userId)) {
+  if (userIds.includes(authorizedUser.userId)) {
     return {
       error: true,
       message: "You cannot delete your own account.",

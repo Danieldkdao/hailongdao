@@ -6,10 +6,9 @@ import Link from "next/link";
 import { UserAvatar } from "@/features/user/components/user-avatar";
 import { Suspense } from "react";
 import { ThemeToggle } from "./theme-toggle";
-import {
-  HeaderActionsSkeleton,
-} from "@/components/async-states";
+import { HeaderActionsSkeleton } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { hasPermission } from "@/features/user/lib/permissions";
 
 export const Header = () => {
   return (
@@ -45,7 +44,11 @@ const HeaderSuspense = async () => {
       </Button>
     );
 
-  if (session.user.role === "admin") {
+  const canAccessDashboard =
+    (await hasPermission({ mathProblem: ["read"] })) ||
+    (await hasPermission({ user: ["list"] }));
+
+  if (canAccessDashboard) {
     return (
       <Button asChild>
         <Link href="/admin/create">

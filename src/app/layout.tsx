@@ -18,8 +18,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hailong Dao - Academic Website",
-  description: "Hailong Dao - Academic Website",
+  title: "DaoMath",
+  description:
+    "The official website of DaoMath, a place where users can discuss, share, and explore new math concepts and ideas.",
 };
 
 export default function RootLayout({

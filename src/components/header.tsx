@@ -14,7 +14,15 @@ export const Header = () => {
   return (
     <header className="border-b shadow-sm">
       <div className="md:max-w-5xl py-6 px-4 mx-auto w-full flex justify-between items-center gap-2">
-        <h1 className="text-3xl font-bold">DaoMath</h1>
+        <div className="flex items-center gap-6">
+          <Link href="/" className="text-base font-medium">
+            DaoMath
+          </Link>
+          <Link href="/about" className="text-base font-medium">
+            About
+          </Link>
+        </div>
+
         <div className="flex items-center gap-2">
           <Suspense fallback={<HeaderActionsSkeleton />}>
             <AsyncErrorBoundary

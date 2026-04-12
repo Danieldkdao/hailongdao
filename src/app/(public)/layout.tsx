@@ -4,9 +4,10 @@ import { ReactNode } from "react";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full min-h-screen">
       <Header />
-      {children}
+      <div className="flex-1">{children}</div>
+
       <Footer />
     </div>
   );

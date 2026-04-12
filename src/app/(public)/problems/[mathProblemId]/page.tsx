@@ -68,7 +68,10 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
           </Link>
         </Button>
         <IncrementProblemViewCount mathProblemId={mathProblem.id} />
-        <h1 className="text-4xl font-bold">{mathProblem.title}</h1>
+        <MarkdownRenderer className="[&_p:first-child]:text-4xl text-center [&_p:first-child]:font-bold [&_p:first-child]:leading-tight [&_p:first-child]:my-0">
+          {mathProblem.title}
+        </MarkdownRenderer>
+
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <UserAvatar name={user.name} image={user.image} />
@@ -154,7 +157,7 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
           </div>
         </div>
 
-        <MarkdownRenderer className="py-6">
+        <MarkdownRenderer className="py-6 text-center">
           {mathProblem.content}
         </MarkdownRenderer>
 

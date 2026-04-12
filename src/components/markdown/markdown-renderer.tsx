@@ -193,7 +193,7 @@ export const MarkdownRenderer = ({
   return (
     <div
       data-color-mode={resolvedTheme === "dark" ? "dark" : "light"}
-      className={cn("min-w-0 w-full text-foreground", className)}
+      className={cn("min-w-0 w-full font-sans text-foreground", className)}
       style={markdownThemeVars}
     >
       <div className="wmde-markdown-var" style={markdownThemeVars} />
@@ -201,7 +201,7 @@ export const MarkdownRenderer = ({
         source={children}
         remarkPlugins={[remarkMath]}
         rehypePlugins={[[rehypeKatex, rehypeKatexOptions]]}
-        className="max-w-none min-w-0 bg-transparent text-base text-foreground [&_.katex]:text-foreground [&_.katex-display]:my-6 [&_.katex-display]:w-full [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2 [&_.katex-display]:text-foreground [&_.katex-display>span]:min-w-max [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full"
+        className="max-w-none min-w-0 bg-transparent font-sans text-base text-foreground [&_.katex]:text-foreground [&_.katex-display]:my-6 [&_.katex-display]:w-full [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2 [&_.katex-display]:text-foreground [&_.katex-display>span]:min-w-max [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full"
         style={markdownThemeVars}
         components={markdownComponents}
       />

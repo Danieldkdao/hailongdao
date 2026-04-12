@@ -12,19 +12,24 @@ import Link from "next/link";
 import { formatNumberTruncate } from "@/lib/utils";
 import { getMathProblemProblemStatus } from "./formatters";
 import { DifficultyStars } from "@/components/difficulty-stars";
+import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
 
 export const MathProblemCard = ({
   mathProblem,
 }: {
   mathProblem: GetMathProblemsType["mathProblems"][number];
 }) => {
+  const linkHref = `/problems/${mathProblem.id}`;
+
   return (
     <Card className="h-full">
       <CardContent className="h-full">
         <div className="flex items-center flex-col gap-1">
-          <h1 className="line-clamp-2 text-xl font-bold">
-            {mathProblem.title}
-          </h1>
+          <Link href={linkHref}>
+            <MarkdownRenderer className="text-xl font-bold text-center">
+              {mathProblem.title}
+            </MarkdownRenderer>
+          </Link>
           <span>
             Posted on {mathProblem.createdAt.toLocaleDateString()} by{" "}
             <span className="font-medium">{mathProblem.user.name}</span>
@@ -54,11 +59,8 @@ export const MathProblemCard = ({
               {formatNumberTruncate(mathProblem.upVoteCount)} upvotes
             </Badge>
           </div>
-          <p className="line-clamp-2 text-muted-foreground mt-2">
-            {mathProblem.content}
-          </p>
           <Button variant="ghost" className="w-full mt-2" asChild>
-            <Link href={`/problems/${mathProblem.id}`}>
+            <Link href={linkHref}>
               <ArrowRightIcon />
               Read More
             </Link>

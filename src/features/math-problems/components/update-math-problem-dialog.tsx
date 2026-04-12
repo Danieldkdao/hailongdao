@@ -11,20 +11,22 @@ import {
 } from "@/components/ui/dialog";
 import { CreateUpdateProblemForm } from "./create-update-problem-form";
 import { useRouter } from "next/navigation";
+import { KeywordTable } from "@/db/schema";
 
 type UpdateMathProblemDialogProps = {
   open: boolean;
   setOpen: Setter<boolean>;
-  data: GetUserMathProblemsType[number];
+  mathProblem: GetUserMathProblemsType[number];
+  keywords: (typeof KeywordTable.$inferSelect)[];
 };
 
 export const UpdateMathProblemDialog = ({
   open,
   setOpen,
-  data,
+  mathProblem,
+  keywords,
 }: UpdateMathProblemDialogProps) => {
   const router = useRouter();
-  const { keywords, ...mathProblem } = data;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -35,12 +37,15 @@ export const UpdateMathProblemDialog = ({
         </DialogHeader>
         <div className="flex-1 w-full overflow-visible">
           <CreateUpdateProblemForm
-            mathProblem={mathProblem}
+            mathProblem={{
+              ...mathProblem,
+              keywords: mathProblem.keywords.map((k) => k.keyword),
+            }}
             onFinish={() => {
               router.refresh();
               setOpen(false);
             }}
-            keywords={keywords}
+            keywords={keywords.map((k) => ({ id: k.id, keyword: k.keyword }))}
           />
         </div>
       </DialogContent>

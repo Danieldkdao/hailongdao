@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { AdminTableSkeleton } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
 import { redirect } from "next/navigation";
+import { getKeywords } from "@/features/keywords/actions/actions";
 
 const MathProblemsPage = () => {
   return (
@@ -32,9 +33,14 @@ const MathProblemsSuspense = async () => {
     redirect("/");
   }
 
-  const mathProblems = await getUserMathProblems(userId);
+  const [mathProblems, keywords] = await Promise.all([
+    getUserMathProblems(userId),
+    getKeywords(),
+  ]);
 
-  return <MathProblemListTable mathProblems={mathProblems} />;
+  return (
+    <MathProblemListTable mathProblems={mathProblems} keywords={keywords} />
+  );
 };
 
 export default MathProblemsPage;

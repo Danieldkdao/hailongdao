@@ -12,6 +12,7 @@ import { CommentsPagination } from "@/features/comments/components/comments-pagi
 import { CreateCommentForm } from "@/features/comments/components/create-comment-form";
 import { loadSearchParams } from "@/features/comments/lib/params";
 import { getOneMathProblem } from "@/features/math-problems/actions/actions";
+import { getMathProblemProblemStatus } from "@/features/math-problems/components/formatters";
 import { IncrementProblemViewCount } from "@/features/math-problems/components/increment-problem-view-count";
 import { ProblemVoteButtons } from "@/features/problem-votes/components/problem-vote-buttons";
 import { UserAvatar } from "@/features/user/components/user-avatar";
@@ -77,25 +78,42 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
           <span>Posted on {mathProblem.createdAt.toLocaleDateString()}</span>
         </div>
         <div className="flex flex-col gap-2 items-center">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <DumbbellIcon className="size-4" />
-              Difficulty
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <DumbbellIcon className="size-4" />
+                Difficulty
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge
+                  variant="outline"
+                  size="md"
+                  className="rounded-full bg-background/80 px-3 py-1.5"
+                >
+                  <DifficultyStars
+                    difficultyLevel={mathProblem.difficultyLevel}
+                    className="size-4"
+                  />
+                  <span className="ml-1">
+                    {mathProblem.difficultyLevel} / 5
+                  </span>
+                </Badge>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge
-                variant="outline"
-                size="md"
-                className="rounded-full bg-background/80 px-3 py-1.5"
-              >
-                <DifficultyStars
-                  difficultyLevel={mathProblem.difficultyLevel}
-                  className="size-4"
-                />
-                <span className="ml-1">{mathProblem.difficultyLevel} / 5</span>
-              </Badge>
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              Problem Status
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge
+                  variant="outline"
+                  size="md"
+                  className="rounded-full bg-background/80 px-3 py-1.5"
+                >
+                  {getMathProblemProblemStatus(mathProblem.problemStatus)}
+                </Badge>
+              </div>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <TagIcon className="size-4" />

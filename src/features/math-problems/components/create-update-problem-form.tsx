@@ -16,6 +16,7 @@ import {
 import {
   MathProblemDifficultyLevel,
   mathProblemDifficultyLevels,
+  mathProblemProblemStatuses,
   MathProblemStatus,
   mathProblemStatuses,
 } from "@/db/schema";
@@ -29,7 +30,10 @@ import {
   createMathProblemSchema,
   CreateMathProblemSchemaType,
 } from "../actions/schemas";
-import { getMathProblemStatus } from "./math-problem-list-table";
+import {
+  getMathProblemProblemStatus,
+  getMathProblemStatus,
+} from "./formatters";
 import { Badge } from "@/components/ui/badge";
 import { XIcon } from "lucide-react";
 
@@ -44,24 +48,21 @@ export const CreateUpdateProblemForm = ({
     status: MathProblemStatus;
     difficultyLevel: MathProblemDifficultyLevel;
     content: string;
+    keywords: string[];
   };
   keywords: { id: string; keyword: string }[];
   onFinish?: () => void;
 }) => {
   const form = useForm<CreateMathProblemSchemaType>({
     resolver: zodResolver(createMathProblemSchema),
-    defaultValues: mathProblem
-      ? {
-          ...mathProblem,
-          keywords: keywords.map((k) => k.keyword),
-        }
-      : {
-          title: "",
-          status: "draft",
-          content: "",
-          difficultyLevel: 3,
-          keywords: [],
-        },
+    defaultValues: mathProblem ?? {
+      title: "",
+      status: "draft",
+      content: "",
+      difficultyLevel: 3,
+      problemStatus: "solved",
+      keywords: [],
+    },
   });
 
   const onSubmit = async (data: CreateMathProblemSchemaType) => {
@@ -152,6 +153,32 @@ export const CreateUpdateProblemForm = ({
                         Number(level) as MathProblemDifficultyLevel
                       }
                     />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fieldState.error && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+      <Controller
+        name="problemStatus"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field>
+            <FieldLabel>Problem Status</FieldLabel>
+            <Select
+              {...field}
+              value={field.value}
+              onValueChange={field.onChange}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {mathProblemProblemStatuses.map((status) => (
+                  <SelectItem value={status} key={status}>
+                    {getMathProblemProblemStatus(status)}
                   </SelectItem>
                 ))}
               </SelectContent>

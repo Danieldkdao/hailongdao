@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { formatNumberTruncate } from "@/lib/utils";
+import { getMathProblemProblemStatus } from "./formatters";
+import { DifficultyStars } from "@/components/difficulty-stars";
 
 export const MathProblemCard = ({
   mathProblem,
@@ -27,7 +29,18 @@ export const MathProblemCard = ({
             Posted on {mathProblem.createdAt.toLocaleDateString()} by{" "}
             <span className="font-medium">{mathProblem.user.name}</span>
           </span>
-          <div className="flex items-center gap-2 flex-wrap mt-2">
+          <div className="flex justify-center items-center gap-2 flex-wrap mt-2">
+            <Badge variant="outline">
+              <DifficultyStars
+                difficultyLevel={mathProblem.difficultyLevel}
+                className="size-4"
+              />
+            </Badge>
+            <Badge variant="outline">
+              {getMathProblemProblemStatus(mathProblem.problemStatus)}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-center gap-2 flex-wrap mt-1">
             <Badge variant="outline">
               <EyeIcon className="size-4" />
               {formatNumberTruncate(mathProblem.views)} views

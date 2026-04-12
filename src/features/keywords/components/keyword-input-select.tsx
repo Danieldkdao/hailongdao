@@ -33,11 +33,13 @@ export const KeywordInputSelect = ({
   const filteredKeywords = useMemo(() => {
     const normalizedQuery = query.trim().toUpperCase();
 
-    return keywords.filter((keyword) => {
-      if (values.includes(keyword.keyword)) return false;
-      if (!normalizedQuery) return true;
-      return keyword.keyword.includes(normalizedQuery);
-    });
+    return keywords
+      .filter((keyword) => {
+        if (values.includes(keyword.keyword)) return false;
+        if (!normalizedQuery) return true;
+        return keyword.keyword.includes(normalizedQuery);
+      })
+      .slice(0, 10);
   }, [keywords, query, values]);
 
   const addKeyword = (keyword: string) => {

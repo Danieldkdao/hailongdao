@@ -13,6 +13,14 @@ export const mathProblemStatusEnum = pgEnum(
   mathProblemStatuses,
 );
 
+export const mathProblemProblemStatuses = ["open", "solved"] as const;
+export type MathProblemProblemStatus =
+  (typeof mathProblemProblemStatuses)[number];
+export const mathProblemProblemStatusEnum = pgEnum(
+  "math_problem_problem_statuses",
+  mathProblemProblemStatuses,
+);
+
 export const mathProblemDifficultyLevels = [1, 2, 3, 4, 5] as const;
 export type MathProblemDifficultyLevel =
   (typeof mathProblemDifficultyLevels)[number];
@@ -26,6 +34,7 @@ export const MathProblemTable = pgTable("math_problems", {
     .notNull(),
   content: text("text").notNull(),
   status: mathProblemStatusEnum("status").notNull(),
+  problemStatus: mathProblemProblemStatusEnum("problem_status").notNull(),
   views: integer("views").notNull().default(0),
   difficultyLevel: integer("difficulty_level")
     .$type<MathProblemDifficultyLevel>()

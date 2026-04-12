@@ -15,8 +15,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  KeywordTable,
   MathProblemDifficultyLevel,
   mathProblemDifficultyLevels,
+  MathProblemProblemStatus,
+  mathProblemProblemStatuses,
   MathProblemStatus,
   mathProblemStatuses,
 } from "@/db/schema";
@@ -24,13 +27,10 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { formatDate, formatNumberTruncate } from "@/lib/utils";
 import { ColumnDef, Table } from "@tanstack/react-table";
 import {
-  ArchiveIcon,
   DumbbellIcon,
   EditIcon,
   EllipsisVerticalIcon,
   EyeIcon,
-  FileEditIcon,
-  GlobeIcon,
   MessageSquareIcon,
   SearchIcon,
   ThumbsDownIcon,
@@ -44,40 +44,17 @@ import { toast } from "sonner";
 import {
   deleteMathProblems,
   GetUserMathProblemsType,
-  updateMathProblemsDifficultyLevel,
-  updateMathProblemsStatus,
+  updateMathProblems,
 } from "../actions/actions";
+import {
+  getMathProblemProblemStatus,
+  getMathProblemStatus,
+} from "./formatters";
 import { UpdateMathProblemDialog } from "./update-math-problem-dialog";
 
-export const getMathProblemStatus = (status: MathProblemStatus) => {
-  switch (status) {
-    case "draft":
-      return (
-        <>
-          <FileEditIcon className="size-4" />
-          Draft
-        </>
-      );
-    case "published":
-      return (
-        <>
-          <GlobeIcon className="size-4" />
-          Published
-        </>
-      );
-    case "archived":
-      return (
-        <>
-          <ArchiveIcon className="size-4" />
-          Archived
-        </>
-      );
-    default:
-      throw new Error(`Unknown status: ${status satisfies never}`);
-  }
-};
-
-const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
+const getColumns = (
+  keywords: (typeof KeywordTable.$inferSelect)[],
+): ColumnDef<GetUserMathProblemsType[number]>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -132,6 +109,18 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
         <DifficultyLevelCell
           id={row.original.id}
           originalDifficultyLevel={row.original.difficultyLevel}
+        />
+      );
+    },
+  },
+  {
+    accessorKey: "problemStatus",
+    header: "Problem Status",
+    cell: ({ row }) => {
+      return (
+        <ProblemStatusCell
+          id={row.original.id}
+          originalStatus={row.original.problemStatus}
         />
       );
     },
@@ -195,7 +184,7 @@ const columns: ColumnDef<GetUserMathProblemsType[number]>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      return <ActionCell mathProblem={row.original} />;
+      return <ActionCell mathProblem={row.original} keywords={keywords} />;
     },
     enableHiding: false,
   },
@@ -231,6 +220,17 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
                   {getMathProblemStatus(status)}
                 </div>
               ),
+              value: status,
+              key: status,
+            }))}
+          />
+        )}
+        {table.getColumn("problemStatus") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("problemStatus")}
+            title="Status"
+            options={mathProblemProblemStatuses.map((status) => ({
+              label: getMathProblemProblemStatus(status),
               value: status,
               key: status,
             }))}
@@ -294,17 +294,24 @@ const Toolbar = <T,>({ table }: { table: Table<T> }) => {
 
 export const MathProblemListTable = ({
   mathProblems,
+  keywords,
 }: {
   mathProblems: GetUserMathProblemsType;
+  keywords: (typeof KeywordTable.$inferSelect)[];
 }) => {
   return (
     <div className="w-full overflow-x-auto">
       <DataTable
         data={mathProblems}
-        columns={columns}
+        columns={getColumns(keywords)}
         noResultsMessage="No math problems found."
         ToolbarComponent={Toolbar}
         tableClassName="min-w-[72rem]"
+        initialColumnVisibility={{
+          commentCount: false,
+          upVoteCount: false,
+          downVoteCount: false,
+        }}
         getRowId={(row) => row.id}
       />
     </div>
@@ -335,7 +342,7 @@ const StatusCell = ({
             onClick={() => {
               startTransition(async () => {
                 setOptimisticStatus(status);
-                const res = await updateMathProblemsStatus([id], status);
+                const res = await updateMathProblems([id], { status });
 
                 if (res.error) {
                   toast.error(res.message);
@@ -376,10 +383,9 @@ const DifficultyLevelCell = ({
             onClick={() => {
               startTransition(async () => {
                 setOptimisticDifficultyLevel(level);
-                const res = await updateMathProblemsDifficultyLevel(
-                  [id],
-                  level,
-                );
+                const res = await updateMathProblems([id], {
+                  difficultyLevel: level,
+                });
 
                 if (res.error) {
                   toast.error(res.message);
@@ -395,10 +401,54 @@ const DifficultyLevelCell = ({
   );
 };
 
+const ProblemStatusCell = ({
+  id,
+  originalStatus,
+}: {
+  id: string;
+  originalStatus: MathProblemProblemStatus;
+}) => {
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic(originalStatus);
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger disabled={isPending} asChild>
+        <Button variant="ghost">
+          {getMathProblemProblemStatus(optimisticStatus)}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {mathProblemProblemStatuses.map((status) => (
+          <DropdownMenuItem
+            key={status}
+            onClick={() => {
+              startTransition(async () => {
+                setOptimisticStatus(status);
+                const res = await updateMathProblems([id], {
+                  problemStatus: status,
+                });
+
+                if (res.error) {
+                  toast.error(res.message);
+                }
+              });
+            }}
+          >
+            {getMathProblemProblemStatus(status)}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 const ActionCell = ({
   mathProblem,
+  keywords,
 }: {
   mathProblem: GetUserMathProblemsType[number];
+  keywords: (typeof KeywordTable.$inferSelect)[];
 }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -428,7 +478,8 @@ const ActionCell = ({
       <UpdateMathProblemDialog
         open={open}
         setOpen={setOpen}
-        data={mathProblem}
+        mathProblem={mathProblem}
+        keywords={keywords}
       />
       <ConfirmationDialog />
       <DropdownMenu>
@@ -515,9 +566,9 @@ const SelectedRowActions = ({
     });
     const confirmation = await confirm();
     if (!confirmation) return;
-    const response = await updateMathProblemsStatus(
+    const response = await updateMathProblems(
       selectedRows.map((row) => row.original.id),
-      status,
+      { status },
     );
     if (response.error) {
       toast.error(response.message);
@@ -541,9 +592,35 @@ const SelectedRowActions = ({
     });
     const confirmation = await confirm();
     if (!confirmation) return;
-    const response = await updateMathProblemsDifficultyLevel(
+    const response = await updateMathProblems(
       selectedRows.map((row) => row.original.id),
-      difficultyLevel,
+      { difficultyLevel },
+    );
+    if (response.error) {
+      toast.error(response.message);
+      setIsLoading(false);
+      return;
+    }
+    toast.success(response.message);
+    setIsLoading(false);
+    table.resetRowSelection();
+    router.refresh();
+  };
+
+  const updateProblemStatusAction = async (
+    problemStatus: MathProblemProblemStatus,
+  ) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setConfirmationText({
+      title: "Confirm Multiple Problem Update",
+      description: `Are you sure you want to update ${selectedRowsLength} math ${selectedRowsLength > 1 ? "problems" : "problem"} to have a problem status of ${problemStatus}?`,
+    });
+    const confirmation = await confirm();
+    if (!confirmation) return;
+    const response = await updateMathProblems(
+      selectedRows.map((row) => row.original.id),
+      { problemStatus },
     );
     if (response.error) {
       toast.error(response.message);
@@ -579,6 +656,25 @@ const SelectedRowActions = ({
                 onClick={() => updateStatusAction(status)}
               >
                 {getMathProblemStatus(status)}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={isLoading}>
+            <Button variant="outline">
+              <EditIcon />
+              Set Problem Status
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {mathProblemProblemStatuses.map((status) => (
+              <DropdownMenuItem
+                key={status}
+                onClick={() => updateProblemStatusAction(status)}
+              >
+                {getMathProblemProblemStatus(status)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

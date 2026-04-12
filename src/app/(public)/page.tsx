@@ -7,6 +7,7 @@ import { SearchParams } from "nuqs";
 import { Suspense } from "react";
 import {
   HomeFiltersSkeleton,
+  HomeMathProblemsEmptyState,
   MathProblemsGridSkeleton,
 } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
@@ -18,7 +19,7 @@ type HomeProps = {
 const HomePage = (props: HomeProps) => {
   return (
     <div className="flex flex-col items-center py-10 gap-16 px-10">
-      <div className="flex flex-col gap-6 mt-32">
+      <div className="flex flex-col gap-6 mt-32 items-center w-full">
         <h1 className="text-6xl font-bold text-center">
           Fun Problems in{" "}
           <span className="text-primary">Commutative Algebra</span>
@@ -51,6 +52,15 @@ const HomePage = (props: HomeProps) => {
 const HomeSuspense = async ({ searchParams }: HomeProps) => {
   const filters = await loadSearchParams(searchParams);
   const data = await getMathProblems(filters);
+  const hasActiveFilters =
+    filters.query.trim().length > 0 ||
+    filters.sortBy !== "" ||
+    filters.difficultyLevels.length > 0 ||
+    filters.problemStatuses.length > 0;
+
+  if (data.mathProblems.length === 0) {
+    return <HomeMathProblemsEmptyState hasActiveFilters={hasActiveFilters} />;
+  }
 
   return (
     <div className="space-y-6 w-full max-w-300 mx-auto">

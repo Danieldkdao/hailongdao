@@ -2,7 +2,9 @@ import { ReactNode } from "react";
 import {
   AlertTriangleIcon,
   ArrowLeftIcon,
+  BookOpenIcon,
   RotateCcwIcon,
+  SearchXIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -15,6 +17,14 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarFooter } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuSkeleton,
+  SidebarRail,
+} from "@/components/ui/sidebar";
 import {
   Table,
   TableBody,
@@ -149,16 +159,38 @@ export const SidebarUserSkeleton = () => {
   );
 };
 
+export const AppSidebarSkeleton = () => {
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:flex-col">
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="h-4 w-24 group-data-[collapsible=icon]:hidden" />
+          </div>
+          <Skeleton className="size-8 rounded-md" />
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="px-2">
+        <SidebarMenu>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SidebarMenuSkeleton key={index} showIcon />
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarUserSkeleton />
+      <SidebarRail />
+    </Sidebar>
+  );
+};
+
 export const HomeFiltersSkeleton = () => {
   return (
     <div className="flex w-full flex-col items-center gap-4">
       <Skeleton className="h-20 w-full max-w-3xl rounded-full" />
       <div className="flex flex-wrap items-center justify-center gap-2">
         {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton
-            key={index}
-            className="h-9 w-28 rounded-full"
-          />
+          <Skeleton key={index} className="h-9 w-28 rounded-full" />
         ))}
       </div>
     </div>
@@ -206,6 +238,38 @@ export const MathProblemsGridSkeleton = ({ count = 6 }: { count?: number }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const HomeMathProblemsEmptyState = ({
+  hasActiveFilters,
+}: {
+  hasActiveFilters: boolean;
+}) => {
+  return (
+    <Card className="mx-auto w-full max-w-3xl border-2 border-dashed shadow-none">
+      <CardContent className="flex flex-col items-center gap-5 py-12 text-center">
+        <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+          {hasActiveFilters ? (
+            <SearchXIcon className="size-8" />
+          ) : (
+            <BookOpenIcon className="size-8" />
+          )}
+        </div>
+        <div className="space-y-2">
+          <CardTitle className="text-2xl">
+            {hasActiveFilters
+              ? "No problems match your filters"
+              : "No problems have been published yet"}
+          </CardTitle>
+          <CardDescription className="mx-auto max-w-xl text-base">
+            {hasActiveFilters
+              ? "Try clearing a few filters or broadening your search to uncover more problems."
+              : "The collection is still warming up. Check back soon for new commutative algebra problems to explore."}
+          </CardDescription>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

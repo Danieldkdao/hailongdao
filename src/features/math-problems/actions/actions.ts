@@ -1,33 +1,29 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/auth/auth-helpers";
-import {
-  createMathProblemSchema,
-  CreateMathProblemSchemaType,
-  mathProblemDifficultyLevelSchema,
-  mathProblemStatusSchema,
-} from "./schemas";
-import {
-  INVALID_DATA_MESSAGE,
-  NO_PERMISSION_MESSAGE,
-} from "@/lib/auth/constants";
-import {
-  insertMathProblem,
-  updateMathProblems as updateMathProblemsDb,
-  deleteMathProblems as deleteMathProblemsDb,
-} from "../db/math-problems";
 import { db } from "@/db/db";
 import {
   CommentTable,
   KeywordTable,
   MathProblemDifficultyLevel,
   MathProblemKeywordTable,
-  MathProblemStatus,
+  MathProblemProblemStatus,
   MathProblemTable,
   MathProblemVoteTable,
   user,
   VoteType,
 } from "@/db/schema";
+import {
+  insertMathProblemKeywords,
+  updateMathProblemKeywords,
+} from "@/features/keywords/actions/actions";
+import { hasPermissionForUser } from "@/features/user/lib/permissions";
+import { getCurrentUser } from "@/lib/auth/auth-helpers";
+import {
+  INVALID_DATA_MESSAGE,
+  NO_PERMISSION_MESSAGE,
+} from "@/lib/auth/constants";
+import { PAGE_SIZE } from "@/lib/constants";
+import { ActionOutput } from "@/lib/types";
 import {
   and,
   asc,
@@ -36,8 +32,8 @@ import {
   eq,
   exists,
   getTableColumns,
-  inArray,
   ilike,
+  inArray,
   or,
   SQL,
   sql,
@@ -49,14 +45,17 @@ import {
   getUserMathProblemTag,
   revalidateMathProblemCache,
 } from "../db/cache/math-problems";
-import { ActionOutput } from "@/lib/types";
-import { SORT_BY } from "../lib/params";
-import { PAGE_SIZE } from "@/lib/constants";
 import {
-  insertMathProblemKeywords,
-  updateMathProblemKeywords,
-} from "@/features/keywords/actions/actions";
-import { hasPermissionForUser } from "@/features/user/lib/permissions";
+  deleteMathProblems as deleteMathProblemsDb,
+  insertMathProblem,
+  updateMathProblems as updateMathProblemsDb,
+} from "../db/math-problems";
+import { SORT_BY } from "../lib/params";
+import {
+  createMathProblemSchema,
+  CreateMathProblemSchemaType,
+  updateMathProblemsSchema,
+} from "./schemas";
 
 const getAuthorizedMathProblemUser = async () => {
   const { userId, user } = await getCurrentUser({ allData: true });
@@ -77,7 +76,10 @@ const userOwnsMathProblems = async (userId: string, ids: string[]) => {
     })
     .from(MathProblemTable)
     .where(
-      and(inArray(MathProblemTable.id, ids), eq(MathProblemTable.userId, userId)),
+      and(
+        inArray(MathProblemTable.id, ids),
+        eq(MathProblemTable.userId, userId),
+      ),
     );
 
   return result.count === ids.length;
@@ -176,9 +178,9 @@ export const createMathProblem = async (
   };
 };
 
-export const updateMathProblemsStatus = async (
+export const updateMathProblems = async (
   ids: string[],
-  unsafeStatus: MathProblemStatus,
+  unsafeData: Partial<typeof MathProblemTable.$inferSelect>,
 ) => {
   const authorizedUser = await requireMathProblemPermission({
     ownPermission: "update",
@@ -187,7 +189,8 @@ export const updateMathProblemsStatus = async (
   });
   if (authorizedUser.error) return authorizedUser;
 
-  const { success, data } = mathProblemStatusSchema.safeParse(unsafeStatus);
+  const { success, data } = updateMathProblemsSchema.safeParse(unsafeData);
+
   if (!success) {
     return {
       error: true,
@@ -195,40 +198,11 @@ export const updateMathProblemsStatus = async (
     };
   }
 
-  await updateMathProblemsDb(ids, { status: data });
+  await updateMathProblemsDb(ids, data);
 
   return {
     error: false,
     message: "Math problem status updated successfully!",
-  };
-};
-
-export const updateMathProblemsDifficultyLevel = async (
-  ids: string[],
-  unsafeDifficultyLevel: MathProblemDifficultyLevel,
-) => {
-  const authorizedUser = await requireMathProblemPermission({
-    ownPermission: "update",
-    allPermission: "update-all",
-    ids,
-  });
-  if (authorizedUser.error) return authorizedUser;
-
-  const { success, data } = mathProblemDifficultyLevelSchema.safeParse(
-    unsafeDifficultyLevel,
-  );
-  if (!success) {
-    return {
-      error: true,
-      message: INVALID_DATA_MESSAGE,
-    };
-  }
-
-  await updateMathProblemsDb(ids, { difficultyLevel: data });
-
-  return {
-    error: false,
-    message: "Math problems difficulty level updated successfully!",
   };
 };
 
@@ -338,10 +312,14 @@ export const getMathProblems = async ({
   page,
   sortBy,
   query,
+  difficultyLevels,
+  problemStatuses,
 }: {
   page: number;
   sortBy: MathProblemSortBy;
   query: string;
+  difficultyLevels: MathProblemDifficultyLevel[];
+  problemStatuses: MathProblemProblemStatus[];
 }) => {
   "use cache";
   cacheTag(getMathProblemGlobalTag());
@@ -390,6 +368,12 @@ export const getMathProblems = async ({
           ),
       ),
     ),
+    difficultyLevels.length
+      ? inArray(MathProblemTable.difficultyLevel, difficultyLevels)
+      : undefined,
+    problemStatuses.length
+      ? inArray(MathProblemTable.problemStatus, problemStatuses)
+      : undefined,
   );
 
   const mathProblems = await db

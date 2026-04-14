@@ -17,7 +17,7 @@ import { IncrementProblemViewCount } from "@/features/math-problems/components/i
 import { ProblemVoteButtons } from "@/features/problem-votes/components/problem-vote-buttons";
 import { UserAvatar } from "@/features/user/components/user-avatar";
 import { getCurrentUser } from "@/lib/auth/auth-helpers";
-import { formatNumberTruncate } from "@/lib/utils";
+import { formatDateOnly, formatNumberTruncate } from "@/lib/utils";
 import {
   ArrowLeftIcon,
   DumbbellIcon,
@@ -78,7 +78,7 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
             <span className="font-medium text-base">{user.name}</span>
           </div>
           <span>•</span>
-          <span>Posted on {mathProblem.createdAt.toLocaleDateString()}</span>
+          <span>Posted on {formatDateOnly(mathProblem.createdAt)}</span>
         </div>
         <div className="flex flex-col gap-2 items-center">
           <div className="flex items-center gap-2 flex-wrap">

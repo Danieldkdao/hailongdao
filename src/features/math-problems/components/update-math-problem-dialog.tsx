@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Setter } from "@/lib/types";
 import { GetUserMathProblemsType } from "../actions/actions";
 import {
@@ -27,6 +28,17 @@ export const UpdateMathProblemDialog = ({
   keywords,
 }: UpdateMathProblemDialogProps) => {
   const router = useRouter();
+
+  useEffect(() => {
+    if (!open) return;
+
+    return () => {
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("pointer-events");
+      document.body.style.removeProperty("padding-right");
+      document.body.style.removeProperty("margin-right");
+    };
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

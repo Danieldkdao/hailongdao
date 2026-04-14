@@ -1,5 +1,5 @@
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
+import { Footer } from "@/components/app/footer";
+import { Header } from "@/components/app/header";
 import { ReactNode } from "react";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {

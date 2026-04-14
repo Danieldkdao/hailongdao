@@ -24,3 +24,11 @@ export const formatDate = (value: Date | null | undefined) => {
     timeStyle: "short",
   }).format(value);
 };
+
+export const formatDateOnly = (value: Date | null | undefined) => {
+  if (!value) return "Never";
+
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+  }).format(value);
+};

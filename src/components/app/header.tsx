@@ -1,14 +1,14 @@
-import { auth } from "@/lib/auth/auth";
-import { headers } from "next/headers";
-import { Button } from "./ui/button";
-import { LayoutDashboardIcon, LogInIcon } from "lucide-react";
-import Link from "next/link";
-import { UserAvatar } from "@/features/user/components/user-avatar";
-import { Suspense } from "react";
-import { ThemeToggle } from "./theme-toggle";
-import { HeaderActionsSkeleton } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { HeaderActionsSkeleton } from "@/components/async-states";
 import { hasPermission } from "@/features/user/lib/permissions";
+import { auth } from "@/lib/auth/auth";
+import { LayoutDashboardIcon, LogInIcon } from "lucide-react";
+import { headers } from "next/headers";
+import Link from "next/link";
+import { Suspense } from "react";
+import { ThemeToggle } from "../theme-toggle";
+import { Button } from "../ui/button";
+import { HeaderUser } from "./header-user";
 
 export const Header = () => {
   return (
@@ -66,11 +66,6 @@ const HeaderSuspense = async () => {
       </Button>
     );
   } else {
-    return (
-      <div className="flex items-center gap-2">
-        <UserAvatar name={session.user.name} image={session.user.image} />
-        <span className="font-medium">{session.user.name}</span>
-      </div>
-    );
+    return <HeaderUser name={session.user.name} image={session.user.image} />;
   }
 };

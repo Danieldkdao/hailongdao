@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { formatNumberTruncate } from "@/lib/utils";
+import { formatDateOnly, formatNumberTruncate } from "@/lib/utils";
 import { getMathProblemProblemStatus } from "./formatters";
 import { DifficultyStars } from "@/components/difficulty-stars";
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
@@ -31,7 +31,7 @@ export const MathProblemCard = ({
             </MarkdownRenderer>
           </Link>
           <span>
-            Posted on {mathProblem.createdAt.toLocaleDateString()} by{" "}
+            Posted on {formatDateOnly(mathProblem.createdAt)} by{" "}
             <span className="font-medium">{mathProblem.user.name}</span>
           </span>
           <div className="flex justify-center items-center gap-2 flex-wrap mt-2">

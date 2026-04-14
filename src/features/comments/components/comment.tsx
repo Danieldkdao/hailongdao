@@ -1,5 +1,6 @@
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
 import { UserAvatar } from "@/features/user/components/user-avatar";
+import { formatDateOnly } from "@/lib/utils";
 import { GetCommentsType } from "../actions/actions";
 import { CommentVoteButtons } from "@/features/comment-votes/components/comment-vote-buttons";
 
@@ -24,7 +25,7 @@ export const Comment = ({
           </div>
 
           <span className="text-muted-foreground">
-            Posted on {comment.createdAt.toLocaleDateString()}
+            Posted on {formatDateOnly(comment.createdAt)}
           </span>
           <MarkdownRenderer>{comment.content}</MarkdownRenderer>
         </div>

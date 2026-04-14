@@ -16,7 +16,7 @@ export const Header = () => {
       <div className="md:max-w-5xl py-6 px-4 mx-auto w-full flex justify-between items-center gap-2">
         <div className="flex items-center gap-6">
           <Link href="/" className="text-base font-medium">
-            DaoMath
+            Home
           </Link>
           <Link href="/about" className="text-base font-medium">
             About

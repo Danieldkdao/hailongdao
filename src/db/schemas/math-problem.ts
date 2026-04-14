@@ -13,7 +13,11 @@ export const mathProblemStatusEnum = pgEnum(
   mathProblemStatuses,
 );
 
-export const mathProblemProblemStatuses = ["open", "solved"] as const;
+export const mathProblemProblemStatuses = [
+  "open",
+  "solved",
+  "possibly-solved",
+] as const;
 export type MathProblemProblemStatus =
   (typeof mathProblemProblemStatuses)[number];
 export const mathProblemProblemStatusEnum = pgEnum(

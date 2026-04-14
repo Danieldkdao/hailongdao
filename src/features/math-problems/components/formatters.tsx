@@ -5,6 +5,7 @@ import {
   ArchiveIcon,
   CircleDotIcon,
   CircleCheckBigIcon,
+  CircleQuestionMarkIcon,
 } from "lucide-react";
 
 export const getMathProblemStatus = (status: MathProblemStatus) => {
@@ -51,6 +52,13 @@ export const getMathProblemProblemStatus = (
         <div className="flex items-center gap-2">
           <CircleCheckBigIcon className="size-4" />
           Solved
+        </div>
+      );
+    case "possibly-solved":
+      return (
+        <div className="flex items-center gap-2">
+          <CircleQuestionMarkIcon className="size-4" />
+          Possibly Solved
         </div>
       );
     default:

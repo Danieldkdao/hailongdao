@@ -196,3 +196,42 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .markdown-callout {
+    @apply my-6 rounded-xl border-l-4 px-5 py-4 shadow-xs;
+  }
+
+  .markdown-callout > * {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .markdown-callout > :first-child {
+    margin-top: 0;
+  }
+
+  .markdown-callout > :last-child {
+    margin-bottom: 0;
+  }
+
+  .markdown-callout > p {
+    white-space: pre-line;
+  }
+
+  .markdown-callout-note {
+    @apply border-slate-300 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100;
+  }
+
+  .markdown-callout-info {
+    @apply border-sky-300 bg-sky-50 text-sky-950 dark:border-sky-700 dark:bg-sky-950/35 dark:text-sky-100;
+  }
+
+  .markdown-callout-success {
+    @apply border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/35 dark:text-emerald-100;
+  }
+
+  .markdown-callout-warning {
+    @apply border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/35 dark:text-amber-100;
+  }
+}

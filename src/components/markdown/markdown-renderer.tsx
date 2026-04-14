@@ -9,6 +9,11 @@ import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { rehypeKatexOptions } from "./katex-config";
+import {
+  markdownSanitizeSchema,
+  markdownRemarkPlugins,
+  rehypeSanitize,
+} from "./callouts";
 
 const markdownThemeVars = {
   "--color-canvas-default": "transparent",
@@ -199,8 +204,11 @@ export const MarkdownRenderer = ({
       <div className="wmde-markdown-var" style={markdownThemeVars} />
       <MDEditor.Markdown
         source={children}
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[[rehypeKatex, rehypeKatexOptions]]}
+        remarkPlugins={[remarkMath, ...markdownRemarkPlugins]}
+        rehypePlugins={[
+          [rehypeSanitize, markdownSanitizeSchema],
+          [rehypeKatex, rehypeKatexOptions],
+        ]}
         className="max-w-none min-w-0 bg-transparent font-sans text-base text-foreground [&_.katex]:text-foreground [&_.katex-display]:my-6 [&_.katex-display]:w-full [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2 [&_.katex-display]:text-foreground [&_.katex-display>span]:min-w-max [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full"
         style={markdownThemeVars}
         components={markdownComponents}

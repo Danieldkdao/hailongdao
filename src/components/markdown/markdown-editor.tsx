@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import katex from "katex";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
-import type { MDEditorProps } from "@uiw/react-md-editor";
+import type { ICommand, MDEditorProps } from "@uiw/react-md-editor";
 import {
   useEffect,
   useMemo,
@@ -20,10 +20,23 @@ import {
   codeEdit,
   codeLive,
   codePreview,
+  divider,
   fullscreen,
+  getCommands,
+  group,
 } from "@uiw/react-md-editor/commands";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import {
+  CALLOUT_TYPES,
+  type CalloutType,
+  CALLOUT_CONFIG,
+  getCalloutTemplate,
+  markdownSanitizeSchema,
+  markdownRemarkPlugins,
+  rehypeSanitize,
+} from "./callouts";
 import { katexMacros, rehypeKatexOptions } from "./katex-config";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
@@ -57,6 +70,32 @@ const unorderedListPattern = /^(\s*)([-*])\s+(.*)$/;
 const orderedListPattern = /^(\s*)(\d+)\.\s+(.*)$/;
 type PreviewOptions = NonNullable<MDEditorProps["previewOptions"]>;
 type PreviewComponents = NonNullable<PreviewOptions["components"]>;
+
+const insertCallout = (type: CalloutType): ICommand => {
+  const Icon = CALLOUT_CONFIG[type].icon;
+
+  return {
+    name: `Insert ${CALLOUT_CONFIG[type].label} callout`,
+    keyCommand: `callout-${type}`,
+    buttonProps: {
+      "aria-label": `Insert ${CALLOUT_CONFIG[type].label.toLowerCase()} callout`,
+    },
+    icon: <Icon className="size-4" />,
+    execute: (state, api) => {
+      const template = getCalloutTemplate(type, state.selectedText);
+      const nextState = api.replaceSelection(template);
+      const contentStart = template.indexOf("\n") + 1;
+      const contentEnd = template.lastIndexOf("\n:::");
+
+      api.setSelectionRange({
+        start: nextState.selection.start - template.length + contentStart,
+        end: nextState.selection.start - template.length + contentEnd,
+      });
+    },
+  };
+};
+
+const calloutCommands = CALLOUT_TYPES.map(insertCallout);
 
 const getContinuedListLine = (line: string) => {
   const unorderedMatch = line.match(unorderedListPattern);
@@ -158,8 +197,11 @@ export const MarkdownEditor = ({
       ({
         className:
           "prose prose-slate max-w-none px-5 py-4 dark:prose-invert prose-headings:tracking-tight prose-pre:overflow-x-auto prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6 prose-li:my-1 prose-blockquote:border-l-4 prose-blockquote:border-border prose-blockquote:pl-4 prose-blockquote:text-muted-foreground [&_.contains-task-list]:list-none [&_.contains-task-list]:pl-0 [&_.task-list-item]:list-none [&_.task-list-item]:pl-0",
-        remarkPlugins: [remarkMath],
-        rehypePlugins: [[rehypeKatex, rehypeKatexOptions]],
+        remarkPlugins: [remarkMath, ...markdownRemarkPlugins],
+        rehypePlugins: [
+          [rehypeSanitize, markdownSanitizeSchema],
+          [rehypeKatex, rehypeKatexOptions],
+        ],
         components: {
           ul: (({ children, ...props }: ComponentPropsWithoutRef<"ul">) => (
             <ul
@@ -221,6 +263,52 @@ export const MarkdownEditor = ({
     [],
   );
 
+  const toolbarCommands = useMemo(
+    () => [
+      ...getCommands(),
+      divider,
+      group([], {
+        name: "callouts",
+        groupName: "callouts",
+        buttonProps: { "aria-label": "Insert callout" },
+        icon: <div className="text-xs font-semibold">Box</div>,
+        children: ({ close, getState, textApi, dispatch }) => (
+          <div className="flex min-w-44 flex-col gap-1 p-2">
+            {calloutCommands.map((command) => {
+              const type = command.keyCommand?.replace("callout-", "") as CalloutType;
+              const config = CALLOUT_CONFIG[type];
+              const Icon = config.icon;
+
+              return (
+                <Button
+                  key={command.keyCommand}
+                  type="button"
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => {
+                    const state = getState?.();
+                    if (state && textApi && command.execute) {
+                      command.execute(
+                        { ...state, command },
+                        textApi,
+                        dispatch,
+                      );
+                    }
+                    close();
+                  }}
+                >
+                  <Icon className="size-4" />
+                  {config.label}
+                </Button>
+              );
+            })}
+          </div>
+        ),
+      }),
+    ],
+    [],
+  );
+
   if (isPending) {
     return (
       <Skeleton
@@ -242,6 +330,7 @@ export const MarkdownEditor = ({
           value={value}
           onChange={(nextValue) => onChange(nextValue ?? "")}
           preview={isMobile ? "edit" : "live"}
+          commands={toolbarCommands}
           visibleDragbar={false}
           minHeight={height ?? (isMobile ? 360 : 520)}
           height={height ?? (isMobile ? 360 : 520)}

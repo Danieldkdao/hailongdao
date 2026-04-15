@@ -9,8 +9,8 @@ const AboutPage = () => {
           This is a curated collection of "fun" problems in commutative algebra.
           By that, we mean the statement should be short, understood by most
           graduate students in the field, and easy to formalize, so even the AI
-          models can enjoy them. The solutions (if they exist) typically
-          required some real efforts or creativity.
+          models can enjoy them. The solutions (if they exist) should require
+          some real efforts or creativity.
         </p>
       ),
     },
@@ -26,13 +26,14 @@ const AboutPage = () => {
       ),
     },
     {
-      question: "What does the rating mean?",
+      question: "What do the rating and status mean?",
       answer: (
         <p className="text-muted-foreground">
           Roughly, 1 and 2 stars mean graduate level exercises (and can probably
           be solved by 2026 Pro AI models). 3 stars and higher mean something
           that can be a useful part of a research paper, or a whole paper on its
-          own.
+          own. For status, "open" means "open as far as the original proposer
+          knows" and similarly for other statuses.
         </p>
       ),
     },
@@ -40,8 +41,10 @@ const AboutPage = () => {
       question: "Can I comment?",
       answer: (
         <p className="text-muted-foreground">
-          Yes! And we encourage you to do so! The comment box is open for anyone
-          and supports basic latex and hyperlinks. See here for details:{" "}
+          Yes! And we would love to hear from you, especially when it concerns
+          originality, correctness, or updates on the problems. The comment box
+          is open for anyone and supports basic latex and hyperlinks. See here
+          for details:{" "}
           <Link
             href="https://katex.org"
             target="_blank"
@@ -56,7 +59,7 @@ const AboutPage = () => {
       question: "Who are you?",
       answer: (
         <p className="text-muted-foreground">
-          The initial idea and coding works come from the team of{" "}
+          The initial idea, problems, and coding works come from the team of{" "}
           <Link
             href="https://hailongdao.github.io"
             target="_blank"

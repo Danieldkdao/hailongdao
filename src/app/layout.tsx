@@ -19,8 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "DaoMath",
-  description:
-    "The official website of DaoMath, a place where users can discuss, share, and explore new math concepts and ideas.",
+  description: "A fun collection of problems in commutative algebra.",
 };
 
 export default function RootLayout({

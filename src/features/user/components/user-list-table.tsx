@@ -100,7 +100,6 @@ const SORT_OPTIONS: {
   { label: "Oldest first", value: "oldest" },
   { label: "Name A-Z", value: "name-asc" },
   { label: "Username A-Z", value: "username-asc" },
-  { label: "Email A-Z", value: "email-asc" },
 ];
 
 const ROLE_OPTIONS: {
@@ -134,7 +133,9 @@ const ROLE_OPTIONS: {
 ] as const;
 
 const getRoleOption = (role: UserRoleFilter) => {
-  return ROLE_OPTIONS.find((option) => option.value === role) ?? ROLE_OPTIONS[0];
+  return (
+    ROLE_OPTIONS.find((option) => option.value === role) ?? ROLE_OPTIONS[0]
+  );
 };
 
 const getRoleConfirmationCopy = ({
@@ -257,6 +258,7 @@ const getColumns = (currentUserId: string): ColumnDef<UserRow>[] => [
         </div>
       );
     },
+    enableHiding: false,
   },
   {
     id: "username",
@@ -288,6 +290,7 @@ const getColumns = (currentUserId: string): ColumnDef<UserRow>[] => [
         user={row.original}
       />
     ),
+    enableHiding: false,
   },
   {
     id: "accessStatus",
@@ -558,7 +561,10 @@ const RoleCell = ({
           {ROLE_OPTIONS.map((roleOption) => (
             <DropdownMenuItem
               key={roleOption.value}
-              disabled={role === roleOption.value || (isCurrentUser && roleOption.value !== "admin")}
+              disabled={
+                role === roleOption.value ||
+                (isCurrentUser && roleOption.value !== "admin")
+              }
               onClick={async () => {
                 setConfirmationText({
                   title: "Confirm Role Change",
@@ -571,7 +577,10 @@ const RoleCell = ({
                 if (!confirmation) return;
 
                 startTransition(async () => {
-                  const response = await updateUsersRole([user.id], roleOption.value);
+                  const response = await updateUsersRole(
+                    [user.id],
+                    roleOption.value,
+                  );
                   if (response.error) {
                     toast.error(response.message);
                     return;
@@ -866,34 +875,35 @@ const SelectedRowActions = ({
           {selectedCount} {selectedCount === 1 ? "row" : "rows"} selected
         </div>
         <DropdownMenu>
-        <DropdownMenuTrigger asChild disabled={isPending}>
-          <Button variant="outline" size="sm">
-            <UserCogIcon />
-            Set Role
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {ROLE_OPTIONS.map((roleOption) => (
-            <DropdownMenuItem
-              key={roleOption.value}
-              disabled={includesCurrentUser && roleOption.value !== "admin"}
-              onClick={() =>
-                runConfirmedAction({
-                  title: "Confirm Role Change",
-                  description: getRoleConfirmationCopy({
-                    count: selectedRows.length,
-                    role: roleOption.value,
-                  }),
-                  action: () => updateUsersRole(selectedUserIds, roleOption.value),
-                })
-              }
-            >
-              <roleOption.icon />
-              {roleOption.actionLabel}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={isPending}>
+            <Button variant="outline" size="sm">
+              <UserCogIcon />
+              Set Role
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {ROLE_OPTIONS.map((roleOption) => (
+              <DropdownMenuItem
+                key={roleOption.value}
+                disabled={includesCurrentUser && roleOption.value !== "admin"}
+                onClick={() =>
+                  runConfirmedAction({
+                    title: "Confirm Role Change",
+                    description: getRoleConfirmationCopy({
+                      count: selectedRows.length,
+                      role: roleOption.value,
+                    }),
+                    action: () =>
+                      updateUsersRole(selectedUserIds, roleOption.value),
+                  })
+                }
+              >
+                <roleOption.icon />
+                {roleOption.actionLabel}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger
             asChild

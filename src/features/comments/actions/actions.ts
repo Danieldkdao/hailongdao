@@ -34,6 +34,7 @@ export const getComments = async ({
     hasPrevPage: boolean;
     hasNextPage: boolean;
     totalPages: number;
+    totalComments: number;
   };
 }> => {
   "use cache";
@@ -86,7 +87,7 @@ export const getComments = async ({
 
   const hasPrevPage = page > 1;
   const hasNextPage = page * PAGE_SIZE < total.count;
-  const totalPages = Math.floor(total.count / PAGE_SIZE);
+  const totalPages = Math.ceil(total.count / PAGE_SIZE);
 
   return {
     comments,
@@ -94,6 +95,7 @@ export const getComments = async ({
       hasPrevPage,
       hasNextPage,
       totalPages,
+      totalComments: total.count,
     },
   };
 };

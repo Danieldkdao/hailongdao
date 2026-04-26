@@ -1,7 +1,7 @@
 import { getMathProblems } from "@/features/math-problems/actions/actions";
-import { MathCardGrid } from "@/features/math-problems/components/math-card-grid";
+
 import { MathMainFilters } from "@/features/math-problems/components/math-main-filters";
-import { MathMainPagination } from "@/features/math-problems/components/math-main-pagination";
+
 import { loadSearchParams } from "@/features/math-problems/lib/params";
 import { SearchParams } from "nuqs";
 import { Suspense } from "react";
@@ -11,6 +11,7 @@ import {
   MathProblemsGridSkeleton,
 } from "@/components/async-states";
 import { AsyncErrorBoundary } from "@/components/async-error-boundary";
+import { InfiniteMathCardGrid } from "@/features/math-problems/components/infinite-math-card-grid";
 
 type HomeProps = {
   searchParams: Promise<SearchParams>;
@@ -64,8 +65,10 @@ const HomeSuspense = async ({ searchParams }: HomeProps) => {
 
   return (
     <div className="space-y-6 w-full max-w-300 mx-auto">
-      <MathCardGrid mathProblems={data.mathProblems} />
-      <MathMainPagination metadata={data.metadata} />
+      <InfiniteMathCardGrid
+        initialMathProblems={data.mathProblems}
+        initialHasNextPage={data.metadata.hasNextPage}
+      />
     </div>
   );
 };

@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getComments } from "@/features/comments/actions/actions";
 import { CommentListFilters } from "@/features/comments/components/comment-list-filters";
-import { CommentsCardList } from "@/features/comments/components/comments-card-grid";
-import { CommentsPagination } from "@/features/comments/components/comments-pagination";
 import { CreateCommentForm } from "@/features/comments/components/create-comment-form";
+import { InfiniteCommentsGridCard } from "@/features/comments/components/infinite-comments-card-grid";
 import { loadSearchParams } from "@/features/comments/lib/params";
 import { getOneMathProblem } from "@/features/math-problems/actions/actions";
 import { getMathProblemProblemStatus } from "@/features/math-problems/components/formatters";
@@ -169,12 +168,16 @@ const ProblemIdSuspense = async ({ params, searchParams }: ProblemIdProps) => {
         <Separator className="mb-2" />
         <div className="space-y-4 w-full">
           <h2 className="text-2xl font-bold">
-            Comments ({data.comments.length})
+            Comments ({data.metadata.totalComments})
           </h2>
           <CommentListFilters />
-          <CommentsCardList comments={data.comments} />
+          <InfiniteCommentsGridCard
+            initialComments={data.comments}
+            initialHasNextPage={data.metadata.hasNextPage}
+            userId={userId}
+            mathProblemId={mathProblemId}
+          />
           <CreateCommentForm mathProblemId={mathProblemId} />
-          <CommentsPagination metadata={data.metadata} />
         </div>
       </div>
     </div>

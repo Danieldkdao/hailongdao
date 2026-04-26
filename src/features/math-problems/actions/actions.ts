@@ -474,7 +474,7 @@ export const getMathProblems = async ({
 
   const hasPrevPage = page > 1;
   const hasNextPage = page * PAGE_SIZE < total.count;
-  const totalPages = Math.floor(total.count / PAGE_SIZE);
+  const totalPages = Math.ceil(total.count / PAGE_SIZE);
 
   return {
     mathProblems,

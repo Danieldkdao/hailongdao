@@ -6,11 +6,11 @@ const AboutPage = () => {
       question: "What is this site?",
       answer: (
         <p className="text-muted-foreground">
-          This is a curated collection of "fun" problems in commutative algebra.
-          By that, we mean the statement should be short, understood by most
-          graduate students in the field, and easy to formalize, so even the AI
-          models can enjoy them. The solutions (if they exist) should require
-          some real efforts or creativity.
+          This is a curated collection of "fun" problems in, or inspired by
+          commutative algebra. By that, we mean the statement should be short,
+          understood by most graduate students in the field, and easy to
+          formalize, so even the AI models can enjoy them. The solutions (if
+          they exist) should require some real efforts or creativity.
         </p>
       ),
     },

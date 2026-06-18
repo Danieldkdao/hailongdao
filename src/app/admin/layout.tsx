@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/sidebar/admin/app-sidebar";
 import { AppSidebarSkeleton } from "@/components/async-states";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ReactNode, Suspense } from "react";
+import { PasswordRequiredModal } from "@/features/passwords/components/password-required-modal";
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -13,6 +14,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         </Suspense>
         <div className="flex-1 flex flex-col min-w-0">
           <AppHeader />
+          <PasswordRequiredModal />
           <div className="flex-1 min-w-0 overflow-auto">{children}</div>
         </div>
       </div>

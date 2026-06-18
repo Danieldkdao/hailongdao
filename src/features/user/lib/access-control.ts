@@ -15,9 +15,12 @@ const mathProblemStatements = [
   "delete-all",
 ] as const;
 
+const passwordStatements = ["create", "read", "update", "delete"] as const;
+
 const statements = {
   ...defaultStatements,
   mathProblem: mathProblemStatements,
+  password: passwordStatements,
 } as const;
 
 export const ac = createAccessControl(statements);
@@ -26,14 +29,17 @@ export const roles = {
   admin: ac.newRole({
     ...adminAc.statements,
     mathProblem: [...mathProblemStatements],
+    password: [...passwordStatements],
   }),
   contributor: ac.newRole({
     ...userAc.statements,
     mathProblem: ["create", "read", "update", "delete"],
+    password: [],
   }),
   user: ac.newRole({
     ...userAc.statements,
     mathProblem: [],
+    password: [],
   }),
 } as const;
 

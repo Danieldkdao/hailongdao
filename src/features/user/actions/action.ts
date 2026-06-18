@@ -2,13 +2,13 @@
 
 import { headers } from "next/headers";
 import { cacheTag } from "next/cache";
-import { desc, getTableColumns, sql } from "drizzle-orm";
+import { desc, getTableColumns, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth/auth";
 import { getCurrentUser } from "@/lib/auth/auth-helpers";
 import { db } from "@/db/db";
 import { CommentTable, session, user, UserRole } from "@/db/schema";
 import {
-  ERROR_MESSAGE,
+  GENERAL_ERROR_MESSAGE,
   INVALID_DATA_MESSAGE,
   NO_PERMISSION_MESSAGE,
 } from "@/lib/auth/constants";
@@ -27,13 +27,24 @@ const USER_BAN_DURATIONS = {
 
 export type UserBanDuration = keyof typeof USER_BAN_DURATIONS;
 
+const PASSWORD_VALIDATION_REQUIREMENT_DELAYS = {
+  now: 0,
+  threeDays: 1000 * 60 * 60 * 24 * 3,
+  sevenDays: 1000 * 60 * 60 * 24 * 7,
+} as const;
+
+const PASSWORD_VALIDATION_DURATION_MS = 1000 * 60 * 60 * 24 * 3;
+
+export type PasswordValidationRequirement =
+  keyof typeof PASSWORD_VALIDATION_REQUIREMENT_DELAYS;
+
 const isUserRole = (value: string): value is UserRole => {
   return ["admin", "contributor", "user"].includes(value);
 };
 
 const getActionErrorMessage = (error: unknown) => {
   if (error instanceof Error && error.message) return error.message;
-  return ERROR_MESSAGE;
+  return GENERAL_ERROR_MESSAGE;
 };
 
 const formatRowCount = (count: number, singular: string, plural: string) => {
@@ -368,6 +379,55 @@ export const deleteUsers = async (userIds: string[]) => {
     return {
       error: false,
       message: `${formatRowCount(userIds.length, "user", "users")} deleted successfully.`,
+    };
+  } catch (error) {
+    return {
+      error: true,
+      message: getActionErrorMessage(error),
+    };
+  }
+};
+
+export const requireUsersPasswordValidation = async (
+  userIds: string[],
+  requirement: PasswordValidationRequirement,
+) => {
+  const authorizedUser = await requirePermission({ user: ["update"] });
+  if (authorizedUser.error) return authorizedUser;
+
+  if (
+    userIds.length === 0 ||
+    !(requirement in PASSWORD_VALIDATION_REQUIREMENT_DELAYS)
+  ) {
+    return {
+      error: true,
+      message: INVALID_DATA_MESSAGE,
+    };
+  }
+
+  const lastValidatedAt = new Date(
+    Date.now() +
+      PASSWORD_VALIDATION_REQUIREMENT_DELAYS[requirement] -
+      PASSWORD_VALIDATION_DURATION_MS,
+  );
+
+  try {
+    await db
+      .update(user)
+      .set({
+        lastValidatedAt,
+      })
+      .where(inArray(user.id, userIds));
+
+    revalidateUsers(userIds);
+
+    return {
+      error: false,
+      message: `Password validation scheduled for ${formatRowCount(
+        userIds.length,
+        "user",
+        "users",
+      )}.`,
     };
   } catch (error) {
     return {

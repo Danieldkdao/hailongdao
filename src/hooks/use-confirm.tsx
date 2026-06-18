@@ -6,11 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useState, type JSX } from "react";
+import { useState, type ComponentProps, type JSX } from "react";
 
 export const useConfirm = (
   title: string,
   description: string,
+  confirmVariant: ComponentProps<typeof Button>["variant"] = "default",
 ): [() => JSX.Element, () => Promise<unknown>] => {
   const [promise, setPromise] = useState<{
     resolve: (value: boolean) => void;
@@ -54,7 +55,11 @@ export const useConfirm = (
           >
             Cancel
           </Button>
-          <Button onClick={handleConfirm} className="w-full lg:w-auto">
+          <Button
+            onClick={handleConfirm}
+            variant={confirmVariant}
+            className="w-full lg:w-auto"
+          >
             Confirm
           </Button>
         </div>

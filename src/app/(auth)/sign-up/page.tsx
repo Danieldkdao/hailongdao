@@ -11,12 +11,12 @@ import { FaGithub, FaGoogle } from "react-icons/fa6";
 import { Separator } from "@/components/ui/separator";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { errorBorder } from "@/lib/utils";
+import { getInputErrorStyle } from "@/lib/utils";
 import Link from "next/link";
 import { SendIcon } from "lucide-react";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
-import { ERROR_MESSAGE } from "@/lib/auth/constants";
+import { GENERAL_ERROR_MESSAGE } from "@/lib/auth/constants";
 import {
   PasswordInput,
   PasswordInputStrengthChecker,
@@ -73,7 +73,7 @@ const SignUpSchema = () => {
           setVerifyEmail(data.email);
         },
         onError: (error) => {
-          toast.error(error.error.message || ERROR_MESSAGE);
+          toast.error(error.error.message || GENERAL_ERROR_MESSAGE);
         },
       },
     });
@@ -86,7 +86,7 @@ const SignUpSchema = () => {
       callbackURL: "/",
       fetchOptions: {
         onError: (error) => {
-          toast.error(error.error.message || ERROR_MESSAGE);
+          toast.error(error.error.message || GENERAL_ERROR_MESSAGE);
         },
       },
     });
@@ -160,7 +160,7 @@ const SignUpSchema = () => {
                   <Input
                     {...field}
                     placeholder="John Doe"
-                    className={errorBorder(fieldState.error)}
+                    className={getInputErrorStyle(fieldState.error)}
                   />
                   {fieldState.error && (
                     <FieldError errors={[fieldState.error]} />
@@ -177,7 +177,7 @@ const SignUpSchema = () => {
                   <Input
                     {...field}
                     placeholder="jdoeusername"
-                    className={errorBorder(fieldState.error)}
+                    className={getInputErrorStyle(fieldState.error)}
                   />
                   {fieldState.error && (
                     <FieldError errors={[fieldState.error]} />
@@ -194,7 +194,7 @@ const SignUpSchema = () => {
                   <Input
                     {...field}
                     placeholder="example@email.com"
-                    className={errorBorder(fieldState.error)}
+                    className={getInputErrorStyle(fieldState.error)}
                   />
                   {fieldState.error && (
                     <FieldError errors={[fieldState.error]} />
@@ -212,7 +212,7 @@ const SignUpSchema = () => {
                   <PasswordInput
                     {...field}
                     placeholder="••••••••"
-                    className={errorBorder(fieldState.error)}
+                    className={getInputErrorStyle(fieldState.error)}
                   >
                     <PasswordInputStrengthChecker />
                   </PasswordInput>

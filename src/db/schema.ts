@@ -5,3 +5,4 @@ export * from "./schemas/comment";
 export * from "./schemas/comment-vote";
 export * from "./schemas/keyword";
 export * from "./schemas/math-problem-keyword";
+export * from "./schemas/password";

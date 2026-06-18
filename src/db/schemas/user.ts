@@ -11,6 +11,7 @@ import { MathProblemTable } from "./math-problem";
 import { CommentTable } from "./comment";
 import { MathProblemVoteTable } from "./math-problem-vote";
 import { CommentVoteTable } from "./comment-vote";
+import { PasswordTable } from "./password";
 
 export const userRoles = ["user", "contributor", "admin"] as const;
 export type UserRole = (typeof userRoles)[number];
@@ -33,6 +34,7 @@ export const user = pgTable("user", {
   banExpires: timestamp("ban_expires"),
   username: text("username").unique(),
   displayUsername: text("display_username"),
+  lastValidatedAt: timestamp("last_validated_at", { withTimezone: true }),
 });
 
 export const session = pgTable(
@@ -102,6 +104,7 @@ export const userRelations = relations(user, ({ many }) => ({
   comments: many(CommentTable),
   mathProblemVotes: many(MathProblemVoteTable),
   commentVotes: many(CommentVoteTable),
+  passwords: many(PasswordTable),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

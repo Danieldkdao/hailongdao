@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { BookOpenIcon, PlusIcon, UsersIcon } from "lucide-react";
+import { BookOpenIcon, LockIcon, PlusIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -29,22 +29,30 @@ const items = [
     label: "Users",
     icon: UsersIcon,
   },
+  {
+    href: "/admin/passwords",
+    label: "Passwords",
+    icon: LockIcon,
+  },
 ] as const;
 
 export const AppSidebarMain = ({
   canCreateMathProblems,
   canReadMathProblems,
   canManageUsers,
+  canManagePasswords,
 }: {
   canCreateMathProblems: boolean;
   canReadMathProblems: boolean;
   canManageUsers: boolean;
+  canManagePasswords: boolean;
 }) => {
   const pathname = usePathname();
   const visibleItems = items.filter((item) => {
     if (item.href === "/admin/create") return canCreateMathProblems;
     if (item.href === "/admin/math-problems") return canReadMathProblems;
     if (item.href === "/admin/users") return canManageUsers;
+    if (item.href === "/admin/passwords") return canManagePasswords;
     return false;
   });
 

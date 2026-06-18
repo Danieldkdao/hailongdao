@@ -32,6 +32,8 @@ import {
   banUsers,
   deleteUsers,
   GetUsersType,
+  PasswordValidationRequirement,
+  requireUsersPasswordValidation,
   revokeUsersSessions,
   updateUsersEmailVerification,
   updateUsersRole,
@@ -53,6 +55,7 @@ import {
   ShieldIcon,
   Trash2Icon,
   UserCogIcon,
+  UserKeyIcon,
   UsersIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -89,6 +92,28 @@ const BAN_OPTIONS: {
     key: "permanent",
     label: "Ban permanently",
     description: "This user will stay banned until an admin unbans them.",
+  },
+];
+
+const PASSWORD_VALIDATION_OPTIONS: {
+  key: PasswordValidationRequirement;
+  label: string;
+  description: string;
+}[] = [
+  {
+    key: "now",
+    label: "Require now",
+    description: "Password validation will be required immediately.",
+  },
+  {
+    key: "threeDays",
+    label: "Require in 3 days",
+    description: "Password validation will be required three days from now.",
+  },
+  {
+    key: "sevenDays",
+    label: "Require in 7 days",
+    description: "Password validation will be required seven days from now.",
   },
 ];
 
@@ -309,6 +334,19 @@ const getColumns = (currentUserId: string): ColumnDef<UserRow>[] => [
     cell: ({ row }) => <VerificationCell user={row.original} />,
   },
   {
+    accessorKey: "lastValidatedAt",
+    accessorFn: (row) => row.lastValidatedAt,
+    header: ({ column }) => (
+      <DataTableSortableColumnHeader title="Last Validated" column={column} />
+    ),
+    sortingFn: "datetime",
+    cell: ({ row }) => (
+      <div className="text-sm text-muted-foreground">
+        {formatDate(row.original.lastValidatedAt)}
+      </div>
+    ),
+  },
+  {
     accessorKey: "sessionCount",
     header: ({ column }) => (
       <DataTableSortableColumnHeader title="Sessions" column={column} />
@@ -519,7 +557,7 @@ export const UserListTable = ({
         ToolbarComponent={(props) => (
           <Toolbar {...props} currentUserId={currentUserId} />
         )}
-        tableClassName="min-w-[88rem]"
+        tableClassName="min-w-[96rem]"
         getRowId={(row) => row.id}
       />
     </div>
@@ -737,6 +775,30 @@ const ActionCell = ({
             <RefreshCcwIcon />
             Revoke Sessions
           </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <UserKeyIcon />
+              Password Validation
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              {PASSWORD_VALIDATION_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option.key}
+                  onClick={() =>
+                    runConfirmedAction({
+                      title: option.label,
+                      description: `${option.description} This applies to ${user.name}.`,
+                      action: () =>
+                        requireUsersPasswordValidation([user.id], option.key),
+                    })
+                  }
+                >
+                  <UserKeyIcon />
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           {user.banned ? (
             <DropdownMenuItem
               onClick={() =>
@@ -998,6 +1060,37 @@ const SelectedRowActions = ({
           <RefreshCcwIcon />
           Revoke Sessions
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={isPending}>
+            <Button variant="outline" size="sm">
+              <UserKeyIcon />
+              Password Validation
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {PASSWORD_VALIDATION_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.key}
+                onClick={() =>
+                  runConfirmedAction({
+                    title: option.label,
+                    description: `${option.description} This applies to ${selectedCount} selected ${
+                      selectedCount === 1 ? "user" : "users"
+                    }.`,
+                    action: () =>
+                      requireUsersPasswordValidation(
+                        selectedUserIds,
+                        option.key,
+                      ),
+                  })
+                }
+              >
+                <UserKeyIcon />
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           variant="destructive"
           size="sm"

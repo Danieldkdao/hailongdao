@@ -17,6 +17,15 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendOnSignUp: true,
   },
+  user: {
+    additionalFields: {
+      lastValidatedAt: {
+        type: "date",
+        input: true,
+        required: false,
+      },
+    },
+  },
   socialProviders: {
     google: {
       clientId: envServer.GOOGLE_CLIENT_ID,

@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const errorBorder = (error?: FieldError) =>
+export const getInputErrorStyle = (error?: FieldError) =>
   error && "border-destructive";
 
 export const formatNumberTruncate = (num: number) => {
@@ -31,4 +31,9 @@ export const formatDateOnly = (value: Date | null | undefined) => {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
   }).format(value);
+};
+
+export const removeAllWhitespace = (str: string) => {
+  if (!str.trim()) return "";
+  return str.replace(/\s+/g, "");
 };

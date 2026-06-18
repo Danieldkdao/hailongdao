@@ -21,7 +21,7 @@ import {
   mathProblemStatuses,
 } from "@/db/schema";
 import { KeywordInputSelect } from "@/features/keywords/components/keyword-input-select";
-import { errorBorder } from "@/lib/utils";
+import { getInputErrorStyle } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -99,7 +99,7 @@ export const CreateUpdateProblemForm = ({
             <Input
               {...field}
               placeholder="Title goes here..."
-              className={errorBorder(fieldState.error)}
+              className={getInputErrorStyle(fieldState.error)}
             />
             {fieldState.error && <FieldError errors={[fieldState.error]} />}
           </Field>
@@ -142,7 +142,7 @@ export const CreateUpdateProblemForm = ({
               value={field.value.toString()}
               onValueChange={(value) => field.onChange(Number(value))}
             >
-              <SelectTrigger className={errorBorder(fieldState.error)}>
+              <SelectTrigger className={getInputErrorStyle(fieldState.error)}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

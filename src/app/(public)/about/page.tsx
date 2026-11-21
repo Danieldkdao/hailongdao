@@ -18,9 +18,7 @@ const AboutPage = () => {
       question: "Who should use the site?",
       answer: (
         <p className="text-muted-foreground">
-          Anyone who want to have fun thinking about commutative algebra. Or
-          want to train their AI models (who, by 2026, have been quite mediocre
-          at the subject). That's why we provide no solutions (even for the
+          Anyone who want to have fun thinking about commutative algebra, including AI models! That's why we provide no solutions (even for the
           solved ones).
         </p>
       ),
@@ -30,7 +28,7 @@ const AboutPage = () => {
       answer: (
         <p className="text-muted-foreground">
           Roughly, 1 and 2 stars mean graduate level exercises (and can probably
-          be solved by 2026 Pro AI models). 3 stars and higher mean something
+          be solved by mid-2026 top commercial AI models). 3 stars and higher mean something
           that can be a useful part of a research paper, or a whole paper on its
           own. For status, "open" means "open as far as the original proposer
           knows" and similarly for other statuses.
